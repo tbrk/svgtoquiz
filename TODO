@@ -1,0 +1,10 @@
+* Write a man page (generate a pdf version for windows).
+
+Bugs
+----
+
+Enhancements
+------------
+* Add more options for parsing svg files.
+  (handle groups, objects other than paths)
+
