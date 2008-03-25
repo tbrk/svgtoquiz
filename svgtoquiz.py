@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id: main.sml 76 2008-02-28 02:59:15Z tbourke $
+# $Id$
 #
 # Copyright (c) 2008 Timothy Bourke. All rights reserved.
 # 
@@ -155,7 +155,8 @@ def get_state(name):
     abbreviation, otherwise returns an empty string.
     """
     m = options.state_regex.match(name)
-    if m:
+    i = options.ignore_regex.match(name)
+    if m and not i:
 	try: return m.group(1)
 	except IndexError: return ''
     return ''
