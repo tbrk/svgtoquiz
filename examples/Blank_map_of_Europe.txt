@@ -1,0 +1,20 @@
+$Id$
+
+Downloaded from:
+    http://commons.wikimedia.org/wiki/Image:Blank_map_of_Europe.svg
+    (This file is licensed under:
+	Creative Commons Attribution ShareAlike 2.5 License)
+
+The file Blank_map_of_Europe.csv
+was created from http://www.iso.org/iso/iso3166_en_code_lists.txt using sed:
+    sed '1,2d
+    s/\([^;]*\);\(..\)/\2,\1/' iso3166_en_code_lists.txt > Blank_map_of_Europe.csv
+
+Run:
+svgtoquiz.py --zoom=.5 --randomize --name=Europe --id-regex='^(..)$' \
+     --not-id-regex='ad|am|az|ca|dz|ge|il|iq|ir|jo|kz|lb|ma|sa|sy|tm|tn|tr' \
+     Blank_map_of_Europe
+
+Then import form:
+    ~/.mnemosyne/maps/Blank_map_of_Europe.xml
+

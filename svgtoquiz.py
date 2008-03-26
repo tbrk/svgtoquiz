@@ -16,7 +16,12 @@
 # 20080324 T. Bourke
 #   Original code to generate a Mnemosyne quiz from an SVG file.
 #
-VERSION = '0.9'
+# REQUIRES:
+#   * Developed in python 2.5
+#   * Requires rsvg (part of librsvg2)
+#     although it could be modified to support any svg->png convertor.
+#
+VERSION = '1.0'
 RSVG_PATH = '/usr/local/bin/rsvg'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
@@ -38,8 +43,6 @@ class Options:
     parser = OptionParser(usage="%prog [options] <name>",
 			  version="%prog " + VERSION,
 			  description=DESCRIPTION)
-    parser.add_option('--csv-path', dest='srcpath_csv', metavar='PATH',
-		      help='specify a csv file explicitly')
     parser.add_option('-c', '--category', dest='category', metavar='CATEGORY',
 		      help='specify the category')
     parser.add_option('-z', '--zoom', dest='zoom', metavar='FLOAT',
@@ -51,12 +54,19 @@ class Options:
 		      help='reject path ids (regex for subset of -s)')
     parser.add_option('-d', '--dst-path', dest='dstpath', metavar='PATH',
 		      help='specify a location to put the results.')
-    parser.add_option('-m', '--show-matches', dest='show_names',
-		      action='store_true', default=False,
-		      help='write the matched ids to stdout')
+    parser.add_option('-n', '--name', dest='name', metavar='STRING',
+		      help='use a different name')
     parser.add_option('-r', '--randomize', dest='random_order',
 		      action='store_true', default=False,
 		      help='randomly shuffle the exported results')
+    parser.add_option('--csv-path', dest='srcpath_csv', metavar='PATH',
+		      help='specify a csv file explicitly')
+    parser.add_option('--match-csv', dest='match_csv',
+		      action='store_true', default=False,
+		      help='ignore paths with ids missing from the csv file')
+    parser.add_option('-m', '--show-matches', dest='show_names',
+		      action='store_true', default=False,
+		      help='write the matched ids to stdout')
     parser.add_option('--color', dest='color', default='#ff0000',
 		      metavar='HTMLCOLOR',
 		      help='color to use for path hilighting.')
@@ -90,9 +100,15 @@ class Options:
 	else:	   self.ignore_regex = re.compile(r'^$')
 
     def setDstPath(self, path):
-	# TODO: if relative (first char is not / or .) then put in home directory
-	re.sub(r'/$', '', path)
-	self.dstpath = path
+	re.sub(r'[/\\]$', '', path)
+
+	# Relative paths (without leading dot) go into .mnemosyne directory
+	if re.match(r'^[^./]', path):
+	    self.exportpath = path
+	    self.dstpath = os.path.join(os.path.expanduser('~'), '.mnemosyne', path)
+	else:
+	    self.exportpath = path
+	    self.dstpath = path
 
     def parseArguments(self, arguments):
 	(options, args) = self.parser.parse_args(arguments)
@@ -100,15 +116,22 @@ class Options:
 	if args: self.setName(args[0])
 
 	if options.srcpath_csv: self.srcpath_csv = options.srcpath_csv
-	if options.category:    self.category    = options.category
 	if options.zoom:        self.setZoom(options.zoom)
 	self.setStateRegex(options.id_regex, options.not_id_regex)
 	if options.dstpath:     self.setDstPath(options.dstpath)
+	if options.name:
+	    prev_srcpath_svg = self.srcpath_svg
+	    prev_srcpath_csv = self.srcpath_csv
+	    self.setName(options.name)
+	    self.srcpath_svg = prev_srcpath_svg
+	    self.srcpath_csv = prev_srcpath_csv
+	if options.category:    self.category    = options.category
 
 	self.random_order   = options.random_order
 	self.show_names     = options.show_names
 	self.create_inverse = options.create_inverse
 	self.color	    = options.color
+	self.match_csv	    = options.match_csv
 
 	if options.prefix_names: self.prefix = self.name + '_'
 	else:			 self.prefix = ''
@@ -118,7 +141,7 @@ class Options:
 
 	self.setName('map')
 
-	self.setDstPath('./maps')
+	self.setDstPath('maps')
 	self.to_png       = True
 
 	self.rsvg	  = RSVG_PATH
@@ -129,6 +152,7 @@ class Options:
 	self.random_order   = True,
 	self.show_names     = False
 	self.create_inverse = True
+	self.match_csv	    = False
 	self.color	    = '#ff0000'
 	self.prefix	    = self.name + '_'
 	
@@ -193,12 +217,18 @@ def svg_to_png(svg_path, png_path):
     """
     os.system(' '.join([options.svgtopng, svg_path, png_path]))
 
-def make_state_maps(svg):
+def make_state_maps(svg, name_map=None):
     """
     Given an svg map, produce a separate svg map for each state.
+    If name_map is given and options.match_csv=True, then names
+    not in the map are ignored.
     """
+    if not name_map: name_map = {}
+
     names = []
     for (name, node) in get_all_paths(svg, get_state):
+	if options.match_csv and not name_map.has_key(name): continue
+
 	names.append(name)
 
 	if options.show_names: print name
@@ -376,7 +406,7 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 	    else: fullname = n.replace('_', ' ')
 	else: fullname = n.replace('_', ' ')
 
-	n_path = os.path.join(options.dstpath, options.prefix + n + '.png')
+	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
 	q = '<b>%s?</b>\n%s' % (fullname, qimg)
 	a = '<b>%s</b>\n<img src="%s">' % (fullname, n_path)
 	if options.create_inverse:
@@ -402,10 +432,6 @@ def main():
 	sys.exit(1)
     svg = svgs[0]
 
-    names = make_state_maps(svg)
-
-    mapdom.unlink()
-
     if options.srcpath_csv:
 	try: name_map = read_name_map(options.srcpath_csv)
 	except:
@@ -413,6 +439,17 @@ def main():
 	    name_map = None
     else:
 	name_map = None
+
+    try:
+	try:	os.stat(options.dstpath)
+	except: os.makedirs(options.dstpath)
+    except OSError, e:
+	print >> sys.stderr, 'Could not create ' + options.dstpath,
+	print >> sys.stderr, '(' + e.strerror + ')'
+	sys.exit(1)
+
+    names = make_state_maps(svg, name_map)
+    mapdom.unlink()
 
     export = make_questions(names, name_map, options.category, options.q_img)
     edom = export.toXmlDom()
