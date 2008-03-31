@@ -21,8 +21,12 @@
 #   * Requires rsvg (part of librsvg2)
 #     although it could be modified to support any svg->png convertor.
 #
-VERSION = '1.0'
 RSVG_PATH = '/usr/local/bin/rsvg'
+INKSCAPE_PATH = '/usr/local/bin/inkscape'
+SVGTOPNG = 'rsvg'
+# SVGTOPNG = 'inkscape'
+
+VERSION = '1.0.1'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
 question is the id, or looked up in a separate csv file, and the answer is
@@ -38,6 +42,8 @@ import xml.dom.minidom
 from optparse import OptionParser
 
 #----------------------------------------------------------------------
+
+INKSCAPE_DPI = 90.0
 
 class Options:
     parser = OptionParser(usage="%prog [options] <name>",
@@ -86,12 +92,6 @@ class Options:
 	self.q_img       = name + '.png'
 	self.category	 = name.replace('_', ' ')
 
-    def setZoom(self, zoom):
-	self.zoom = str(zoom)
-	self.svgtopng = ' '.join([self.rsvg,
-				  self.rsvgo_xzoom, self.zoom,
-				  self.rsvgo_yzoom, self.zoom])
-    
     def setStateRegex(self, regex=None, ignore=None):
 	if regex: self.state_regex = re.compile(regex)
 	else:     self.state_regex = re.compile(r'(.*)')
@@ -116,7 +116,6 @@ class Options:
 	if args: self.setName(args[0])
 
 	if options.srcpath_csv: self.srcpath_csv = options.srcpath_csv
-	if options.zoom:        self.setZoom(options.zoom)
 	self.setStateRegex(options.id_regex, options.not_id_regex)
 	if options.dstpath:     self.setDstPath(options.dstpath)
 	if options.name:
@@ -127,6 +126,7 @@ class Options:
 	    self.srcpath_csv = prev_srcpath_csv
 	if options.category:    self.category    = options.category
 
+	self.zoom	    = options.zoom
 	self.random_order   = options.random_order
 	self.show_names     = options.show_names
 	self.create_inverse = options.create_inverse
@@ -142,13 +142,8 @@ class Options:
 	self.setName('map')
 
 	self.setDstPath('maps')
-	self.to_png       = True
-
-	self.rsvg	  = RSVG_PATH
-	self.rsvgo_xzoom  = '--x-zoom'
-	self.rsvgo_yzoom  = '--y-zoom'
-	self.setZoom(1.0)
-
+	self.to_png         = True
+	self.zoom	    = 1.0
 	self.random_order   = True,
 	self.show_names     = False
 	self.create_inverse = True
@@ -215,7 +210,19 @@ def svg_to_png(svg_path, png_path):
     """
     Convert the svg_path file into a png_path file.
     """
-    os.system(' '.join([options.svgtopng, svg_path, png_path]))
+    if SVGTOPNG == 'inkscape':
+	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom),
+				0.1),
+			    10000)
+	os.system(' '.join([INKSCAPE_PATH, '--without-gui',
+					   '--export-png=' + png_path,
+					   '--export-dpi=' + zoom,
+					   svg_path]))
+    else:
+	zoom = str(options.zoom)
+	os.system(' '.join([RSVG_PATH, '--x-zoom', zoom,
+				       '--y-zoom', zoom,
+				       svg_path, png_path]))
 
 def make_state_maps(svg, name_map=None):
     """
