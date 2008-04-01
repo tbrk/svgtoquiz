@@ -14,3 +14,6 @@ svgtoquiz.py --zoom=1.2 --randomize --category='USA States' --id-regex='^(..)_1_
 Then import form:
     ~/.mnemosyne/maps/Map_of_USA.xml
 
+To view or edit the associated csv file:
+    ../svgtoquiz.py --id-regex '^(..)_1_$' --gui-csv-edit Map_of_USA
+
