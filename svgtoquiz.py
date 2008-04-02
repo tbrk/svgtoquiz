@@ -19,14 +19,16 @@
 # REQUIRES:
 #   * Developed in python 2.5
 #   * Requires rsvg (part of librsvg2)
-#     although it could be modified to support any svg->png convertor.
+#     although it could be modified to support any svg->png converter.
 #
 RSVG_PATH = '/usr/local/bin/rsvg'
+#RSVG_PATH = '/usr/bin/rsvg'
 INKSCAPE_PATH = '/usr/local/bin/inkscape'
+#INKSCAPE_PATH = '/usr/bin/inkscape'
 SVGTOPNG = 'rsvg'
 # SVGTOPNG = 'inkscape'
 
-VERSION = '1.0.1'
+VERSION = '1.2.0'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
 question is the id, or looked up in a separate csv file, and the answer is
@@ -37,7 +39,8 @@ Mnemosyne."""
 
 #----------------------------------------------------------------------
 
-import sys, re, os, csv, random, codecs
+import sys, re, os, csv, random, codecs, time
+import cStringIO
 from tempfile import mkdtemp
 import xml.dom.minidom
 from optparse import OptionParser
@@ -46,6 +49,7 @@ from optparse import OptionParser
 from Tkinter import *
 import tkMessageBox
 from PIL import Image, ImageTk
+import threading
 
 #----------------------------------------------------------------------
 
@@ -235,47 +239,116 @@ def svg_to_png(svg_path, png_path):
 				       '--y-zoom', zoom,
 				       svg_path, png_path]))
 
-def make_state_maps(dir_path, svg, prefix='', name_map=None):
+def make_image(svg, (name, node), dir_path, prefix=''):
+    prev_fill = fill_style(node, options.color)
+
+    svg_path = os.path.join(dir_path, prefix + name + '.svg')
+    png_path = os.path.join(dir_path, prefix + name + '.png')
+
+    fp = codecs.open(svg_path, 'w', 'utf-8')
+    svg.writexml(fp)
+    fp.close()
+
+    if options.to_png:
+	svg_to_png(svg_path, png_path)
+	os.remove(svg_path)
+
+    fill_style(node, prev_fill)
+
+def read_names_and_nodes(svg, name_map=None):
+    if not name_map: name_map = {}
+
+    namesAndNodes = []
+    for (name, node) in get_all_paths(svg, get_state):
+	if options.match_csv and not name_map.has_key(name): continue
+	namesAndNodes.append((name, node))
+
+    return namesAndNodes
+
+def make_state_maps(svg, namesAndNodes, dir_path, prefix=''):
     """
     Given an svg map, produce a separate svg map for each state.
     If name_map is given and options.match_csv=True, then names
     not in the map are ignored.
     """
-    if not name_map: name_map = {}
-
     names = []
-    for (name, node) in get_all_paths(svg, get_state):
-	if options.match_csv and not name_map.has_key(name): continue
-
+    for (name, node) in namesAndNodes:
+	make_image(svg, (name, node), dir_path, prefix)
 	names.append(name)
 
-	if options.show_names: print name
-	prev_fill = fill_style(node, options.color)
-
-	svg_path = os.path.join(dir_path, prefix + name + '.svg')
-	png_path = os.path.join(dir_path, prefix + name + '.png')
-
-	fp = codecs.open(svg_path, 'w', 'utf-8')
-	svg.writexml(fp)
-	fp.close()
-
-	if options.to_png:
-	    svg_to_png(svg_path, png_path)
-	    os.remove(svg_path)
-
-	fill_style(node, prev_fill)
-
     return names
+
+class UTF8Recoder:
+    """
+    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    Taken from the Python library documentation.
+    """
+    def __init__(self, f, encoding):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode("utf-8")
+
+class UnicodeReader:
+    """
+    A CSV reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding.
+    Taken from the Python library documentation.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        f = UTF8Recoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, "utf-8") for s in row]
+
+    def __iter__(self):
+        return self
 
 def read_name_map(csv_path):
     """
     Read the first two columns of the given csv file into a map.
     """
-    reader = csv.reader(open(csv_path, 'rb'))
+    reader = UnicodeReader(open(csv_path, 'rb'))
     data = {}
     for row in reader:
 	data[row[0]] = row[1]
     return data
+
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    Taken from the Python library documentation.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
 
 def non_ignored(name_map):
     for (key, val) in name_map.iteritems():
@@ -286,7 +359,7 @@ def write_name_map(csv_path, name_map):
     """
     Write non-IGNORE elements of the name_map hash into a csv file.
     """
-    writer = csv.writer(open(csv_path, 'wb'))
+    writer = UnicodeWriter(open(csv_path, 'wb'))
     writer.writerows(non_ignored(name_map))
 
 #----------------------------------------------------------------------
@@ -452,14 +525,98 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 
 #----------------------------------------------------------------------
 
+class ConverterThread (threading.Thread):
+    def __init__(self, dom, svg, namesAndNodes, dir_path, prefix=''):
+	"""
+	The dom, svg and, namesAndNodes data structures become owned by the
+	thread. They should not be further accessed externally.
+	"""
+	threading.Thread.__init__(self)
+
+	self.dom = dom
+	self.svg = svg
+	self.namesAndNodes = namesAndNodes
+	self.numImages = len(namesAndNodes)
+	self.numDone = 0
+	self.current = 0
+	self.pending = [True for x in range(len(self.namesAndNodes))]
+	self.dir_path = dir_path
+	self.prefix = prefix
+
+	self.lock = threading.Lock()
+    
+    def setCurrent(self, curr):
+	self.lock.acquire()
+	self.current = curr
+	self.lock.release()
+
+    def requestStop(self):
+	self.lock.acquire()
+	for i in range(len(self.pending)):
+	    self.pending[i] = False
+	self.lock.release()
+
+    def isDone(self, curr):
+	self.lock.acquire()
+	r = not (self.pending[curr])
+	self.lock.release()
+	return r
+
+    def numberDone(self):
+	self.lock.acquire()
+	r = self.numDone
+	self.lock.release()
+	return r
+
+    def run(self):
+	done = False
+	while not done:
+	    self.lock.acquire()
+	    curr = self.current
+	    while not self.pending[curr]:
+		curr = (curr + 1) % self.numImages
+	    self.lock.release()
+	    done = self.task(curr)
+	self.dom.unlink()
+
+    def task(self, i):
+	# print "converting: " + str(i) + "..."
+	make_image(self.svg, self.namesAndNodes[i], self.dir_path, self.prefix)
+
+	self.lock.acquire()
+	self.pending[i] = False
+	more = True in self.pending
+	self.numDone += 1
+	self.lock.release()
+
+	return (not more)
+
+#----------------------------------------------------------------------
+
 class Application(Frame):
     def showImage(self):
-	path = os.path.join(self.tmpdir, self.names[self.current] + '.png')
-	self.image = ImageTk.PhotoImage(Image.open(path))
-	self.labImage['image'] = self.image
+	if self.converter.isDone(self.current):
+	    path = os.path.join(self.tmpdir, self.names[self.current] + '.png')
+	    img = Image.open(path)
+	    self.lastImageSize = img.size
+	    self.image = ImageTk.PhotoImage(img)
+	    self.labImage['image'] = self.image
+	else:
+	    if self.blankImage == None:
+		self.blankImage = ImageTk.PhotoImage(Image.new('RGB',
+							       self.lastImageSize,
+							       'white'))
+	    self.labImage['image'] = self.blankImage
+	    self.converter.setCurrent(self.current)
+	    self.after(500, self.showImage)
     
     def showStatus(self):
-	self.labStatus['text'] = '%d / %d' % (self.current+1, self.numnames)
+	numdone = self.converter.numberDone()
+	self.labStatus['text'] = '%d / %d [%d done]' % (self.current+1,
+						        self.numnames,
+						        numdone)
+	if numdone < self.numnames:
+	    self.after(100, self.showStatus)
     
     def showCurrentName(self):
 	if self.name_map.has_key(self.names[self.current]):
@@ -474,7 +631,7 @@ class Application(Frame):
     
     def setCurrentName(self, value=None):
 	if value == None:
-	    value = self.dataName.get()
+	    value = unicode(self.dataName.get())
 
 	if (not self.name_map.has_key(self.names[self.current])
 	    or self.name_map[self.names[self.current]] != value):
@@ -498,10 +655,10 @@ class Application(Frame):
 
     def gotoPrev(self):
 	curr = self.current - 1
-	while (curr >= 0 and self.skip(curr)):
+	while (curr > 0 and self.skip(curr)):
 	    curr -= 1
 
-	if (curr >= 0):
+	if (curr >= 0 and not self.skip(curr)):
 	    self.setCurrentName()
 	    self.current = curr
 	    self.updateWindow()
@@ -525,7 +682,11 @@ class Application(Frame):
 	self.setCurrentName()
 	if (not self.dirty) or tkMessageBox.askokcancel(
 		message='The data have not been saved. Really quit?'):
-	    self.cleanTmpDir()
+	    self.converter.requestStop()
+	    self.converter.join(5)
+	    try: self.cleanTmpDir()
+	    except:
+		print >> sys.stderr, 'could not remove ' + self.tmpdir + '...'
 	    self.quit()
 
     def createWidgets(self):
@@ -575,7 +736,7 @@ class Application(Frame):
 	self.entryName = Entry(self.frameData, textvariable=self.dataName)
 	self.entryName.pack(side='left', fill='x', expand='yes')
 
-    def __init__(self, svg, name_map={}, master=None):
+    def __init__(self, dom, svg, name_map={}, master=None):
 	try: mapdom = xml.dom.minidom.parse(options.srcpath_svg)
 	except IOError, e:
 	    print >> sys.stderr, 'Could not open ' + options.srcpath_svg,
@@ -589,13 +750,21 @@ class Application(Frame):
 	    self.name_map = {}
 
 	print 'Generating images (' + self.tmpdir + ')...'
-	self.names = make_state_maps(self.tmpdir, svg, '', name_map)
+
+	namesAndNodes = read_names_and_nodes(svg, name_map)
+	self.names = [unicode(name) for (name, node) in namesAndNodes]
 	self.numnames = len(self.names)
 	if self.numnames == 0:
 	    print >> sys.stderr, 'No paths in file.'
 	    sys.exit(1)
 	self.current = 0
-	mapdom.unlink()
+
+	self.converter = ConverterThread(dom,svg,namesAndNodes,self.tmpdir, '')
+	self.converter.start()
+	while not (self.converter.isDone(0)):
+	    time.sleep(.5)
+	self.lastImageSize = (0,0)
+	self.blankImage = None
 
         Frame.__init__(self, master)
         self.pack(fill='both', expand='yes')
@@ -604,9 +773,10 @@ class Application(Frame):
 
 	self.updateWindow()
 
-def guicsv_main(svg, name_map):
+def guicsv_main(mapdom, svg, name_map):
     root = Tk()
-    app = Application(master=root, svg=svg, name_map=name_map)
+    root.title('svgtoquiz: edit csv file')
+    app = Application(master=root, dom=mapdom, svg=svg, name_map=name_map)
     app.mainloop()
     root.destroy()
 
@@ -634,7 +804,7 @@ def main():
 	name_map = None
 
     if options.run_csvgui:
-	guicsv_main(svg, name_map)
+	guicsv_main(mapdom, svg, name_map)
 	return
 
     try:
@@ -645,13 +815,15 @@ def main():
 	print >> sys.stderr, '(' + e.strerror + ')'
 	sys.exit(1)
 
-    names = make_state_maps(options.dstpath, svg, options.prefix, name_map)
+    namesAndNodes = read_names_and_nodes(svg, name_map)
+    names = make_state_maps(svg, namesAndNodes, options.dstpath, options.prefix)
     mapdom.unlink()
 
     export = make_questions(names, name_map, options.category, options.q_img)
     edom = export.toXmlDom()
-    xfp = open(os.path.join(options.dstpath, options.dstname_xml), 'w')
-    edom.writexml(xfp, encoding='UTF-8')
+    xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
+		      'wb', 'utf-8')
+    edom.writexml(xfp, encoding='utf-8')
     xfp.close()
 
     svg_to_png(options.srcpath_svg,
