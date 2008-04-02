@@ -220,6 +220,7 @@ def guicsv_main(name_map, converter, tmpdir, write_name_map):
     app = Application(master=root, name_map=name_map,
 		      converter=converter, tmpdir=tmpdir,
 		      write_name_map=write_name_map)
+    root.protocol("WM_DELETE_WINDOW", app.quitApp)
     app.mainloop()
     try: root.destroy()
     except: print >> sys.stderr, 'warning: could not destroy tcl/tk root.'

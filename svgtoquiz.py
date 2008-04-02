@@ -24,6 +24,7 @@
 #   * xml.dom.minidom
 #
 RSVG_PATH = '/usr/bin/rsvg'
+RSVG_PATH = '/usr/local/bin/rsvg'
 INKSCAPE_PATH = '/usr/bin/inkscape'
 SVGTOPNG = 'rsvg'
 # SVGTOPNG = 'inkscape'
