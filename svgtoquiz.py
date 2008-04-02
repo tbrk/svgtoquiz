@@ -21,10 +21,8 @@
 #   * Requires rsvg (part of librsvg2)
 #     although it could be modified to support any svg->png converter.
 #
-RSVG_PATH = '/usr/local/bin/rsvg'
-#RSVG_PATH = '/usr/bin/rsvg'
-INKSCAPE_PATH = '/usr/local/bin/inkscape'
-#INKSCAPE_PATH = '/usr/bin/inkscape'
+RSVG_PATH = '/usr/bin/rsvg'
+INKSCAPE_PATH = '/usr/bin/inkscape'
 SVGTOPNG = 'rsvg'
 # SVGTOPNG = 'inkscape'
 

@@ -1,0 +1,8 @@
+svgtoquiz-1.2.0	    20070403
+    New --gui-csv-edit feature for creating csv files.
+    Fixed several unicode bugs.
+    Many thanks to Patrick Kenny for testing and feedback.
+
+svgtoquiz-1.0.0	    20070326
+    First version released.
+
