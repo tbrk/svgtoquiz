@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id: svgtoquiz.py 91 2008-04-02 00:48:18Z tbourke $
+# $Id$
 #
 # Copyright (c) 2008 Timothy Bourke. All rights reserved.
 # 

@@ -24,13 +24,11 @@
 #   * xml.dom.minidom
 #
 RSVG_PATH = '/usr/bin/rsvg'
-RSVG_PATH = '/usr/local/bin/rsvg'
 INKSCAPE_PATH = '/usr/bin/inkscape'
-INKSCAPE_PATH = '/usr/local/bin/inkscape'
 SVGTOPNG = 'rsvg'
 # SVGTOPNG = 'inkscape'
 
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
 question is the id, or looked up in a separate csv file, and the answer is
@@ -52,6 +50,18 @@ import threading
 
 INKSCAPE_DPI = 90.0
 IGNORE = '_ignore_'
+
+try:
+    if SVGTOPNG == 'rsvg':
+	testname = 'RSVG_PATH'
+	testpath = RSVG_PATH
+    else:
+	testname = 'INKSCAPE_PATH'
+	testpath = INKSCAPE_PATH
+    os.stat(testpath)
+except:
+    print >> sys.stderr, 'invalid ' + testname + ': ' + testpath
+    sys.exit(1)
 
 class Options:
     parser = OptionParser(usage="%prog [options] <name>",
@@ -98,7 +108,7 @@ class Options:
 		      help='run the gui csv editor')
 
     def setName(self, name):
-	re.sub(r'.svg$', '', name)
+	name = re.sub(r'.svg$', '', name)
 	self.name        = name
 	self.srcpath_svg = name + '.svg'
 	self.srcpath_csv = name + '.csv'
@@ -128,6 +138,9 @@ class Options:
 	(options, args) = self.parser.parse_args(arguments)
 
 	if args: self.setName(args[0])
+	else:
+	    print >> sys.stderr, '%s: no name specified.' % self.progname
+	    sys.exit(1)
 
 	if options.srcpath_csv: self.srcpath_csv = options.srcpath_csv
 	self.setStateRegex(options.id_regex, options.not_id_regex)
@@ -153,10 +166,11 @@ class Options:
 	if options.prefix_names: self.prefix = self.name + '_'
 	else:			 self.prefix = ''
 
-    def __init__(self):
+    def __init__(self, progname):
 	self.setStateRegex()
+	self.progname = progname
 
-	self.setName('map')
+	self.name = None
 
 	self.setDstPath('maps')
 	self.to_png         = True
@@ -166,9 +180,8 @@ class Options:
 	self.create_inverse = True
 	self.match_csv	    = False
 	self.color	    = '#ff0000'
-	self.prefix	    = self.name + '_'
 	
-options = Options()
+options = Options(os.path.basename(sys.argv[0]))
 
 #----------------------------------------------------------------------
 
