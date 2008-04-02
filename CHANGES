@@ -1,3 +1,8 @@
+svgtoquiz-1.2.2	    20070403
+    Separate gui features into a separate file to reduce the number of
+    dependencies required to use basic features.
+    Minor bug fixes.
+
 svgtoquiz-1.2.0	    20070403
     New --gui-csv-edit feature for creating csv files.
     Fixed several unicode bugs.

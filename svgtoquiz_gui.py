@@ -190,8 +190,6 @@ class Application(Frame):
 	else:
 	    self.name_map = {}
 
-	print 'Generating images (' + self.tmpdir + ')...'
-
 	self.converter = converter
 
 	self.names = self.converter.getNames()

@@ -1,7 +1,8 @@
+* Package up with Dist tools (maybe using the egg system).
+* Clean up the separation into two parts (particularly the interface).
+* Improve support for use on Windows.
+* Try harder to discover paths for rsvg and inkscape.
 * Write a man page (generate a pdf version for windows).
-
-Bugs
-----
 
 Enhancements
 ------------

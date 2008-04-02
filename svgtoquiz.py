@@ -637,7 +637,8 @@ def main():
     if options.srcpath_csv:
 	try: name_map = read_name_map(options.srcpath_csv)
 	except:
-	    print >> sys.stderr, 'Unable to read ' + options.srcpath_csv
+	    if not GUI:
+		print >> sys.stderr, 'Unable to read ' + options.srcpath_csv
 	    name_map = None
     else:
 	name_map = None
