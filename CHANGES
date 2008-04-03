@@ -1,6 +1,7 @@
-svgtoquiz-1.2.2	    20070403
+svgtoquiz-1.2.3	    20070403
     Separate gui features into a separate file to reduce the number of
     dependencies required to use basic features.
+    Handle unicode categories.
     Minor bug fixes.
 
 svgtoquiz-1.2.0	    20070403
