@@ -23,13 +23,16 @@
 #   * threading
 #   * xml.dom.minidom
 #
+
+# NB: rsvg does not seem to work propertly with utf-8 filenames, it gives an
+#     error message: Invalid byte sequence in conversion input
+#     inkscape does work
 RSVG_PATH = '/usr/bin/rsvg'
-RSVG_PATH = '/usr/local/bin/rsvg'
 INKSCAPE_PATH = '/usr/bin/inkscape'
 SVGTOPNG = 'rsvg'
-# SVGTOPNG = 'inkscape'
+#SVGTOPNG = 'inkscape'
 
-VERSION = '1.2.3'
+VERSION = '1.2.4'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
 question is the id, or looked up in a separate csv file, and the answer is
@@ -143,9 +146,11 @@ class Options:
 	    print >> sys.stderr, '%s: no name specified.' % self.progname
 	    sys.exit(1)
 
-	if options.srcpath_csv: self.srcpath_csv = options.srcpath_csv
+	if options.srcpath_csv:
+	    self.srcpath_csv = options.srcpath_csv.decode('utf-8')
 	self.setStateRegex(options.id_regex, options.not_id_regex)
-	if options.dstpath:     self.setDstPath(options.dstpath)
+	if options.dstpath:
+	    self.setDstPath(options.dstpath.decode('utf-8'))
 	if options.name:
 	    prev_srcpath_svg = self.srcpath_svg
 	    prev_srcpath_csv = self.srcpath_csv
@@ -246,15 +251,16 @@ def svg_to_png(svg_path, png_path):
 	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom),
 				0.1),
 			    10000)
-	os.system(' '.join([INKSCAPE_PATH, '--without-gui',
-					   '--export-png=' + png_path,
-					   '--export-dpi=' + zoom,
-					   svg_path]))
+	command = u' '.join([INKSCAPE_PATH, '--without-gui',
+					    '--export-png=' + png_path,
+					    '--export-dpi=' + zoom,
+					    svg_path])
     else:
 	zoom = str(options.zoom)
-	os.system(' '.join([RSVG_PATH, '--x-zoom', zoom,
-				       '--y-zoom', zoom,
-				       svg_path, png_path]))
+	command = u' '.join([RSVG_PATH, '--x-zoom', zoom,
+				        '--y-zoom', zoom,
+				        svg_path, png_path])
+    os.system(command.encode('utf-8'))
 
 def make_image(svg, (name, node), dir_path, prefix=''):
     prev_fill = fill_style(node, options.color)
@@ -529,11 +535,8 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 	else: fullname = n.replace('_', ' ')
 
 	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
-	q = '<b>%s?</b>\n%s' % (fullname,
-				qimg.encode('utf-8', 'xmlcharrefreplace'))
-	a = '<b>%s</b>\n<img src="%s">' % (fullname,
-					   n_path.encode('utf-8',
-							 'xmlcharrefreplace'))
+	q = '<b>%s?</b>\n%s' % (fullname, qimg)
+	a = '<b>%s</b>\n<img src="%s">' % (fullname, n_path)
 	if options.create_inverse:
 	    qinv = '<img src="%s">' % n_path
 	    ainv = '<b>' + fullname + '</b>'
