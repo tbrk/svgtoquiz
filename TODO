@@ -5,6 +5,10 @@
 * Add a feature for grouping multiple paths (e.g. islands)
 * Try harder to discover paths for rsvg and inkscape.
 * Write a man page (generate a pdf version for windows).
+* Improve i18n support (at the moment, the script assumes that all incoming
+  bytes, like command-line arguments and csv files, are in utf-8, it should
+  probably better respect locale settings).
+  
 
 Enhancements
 ------------
