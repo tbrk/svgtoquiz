@@ -1,0 +1,24 @@
+$Id$
+
+Original map downloaded from:
+    http://upload.wikimedia.org/wikipedia/commons/6/66/Blank_Map-Africa.svg
+    (This file is licensed under: Public Domain by Andreas 06)
+
+The land colour was changed to match Map_of_USA.svg. A blue background was
+added.
+
+The Africa.csv file was created by running:
+    svgtoquiz.py --zoom=0.5 --gui-csv-edit Africa.svg
+German names were replaced with their equivalents in English.
+
+Run:
+svgtoquiz.py --zoom=.4 --randomize --match-csv-file Africa
+
+Then import form:
+    ~/.mnemosyne/maps/Africa.xml
+
+NB:
+* Most of the smaller island nations and territories are not included.
+* Only one of the Sao Tome & Principe islands is highlighted due to
+  limitations in the svgtoquiz script.
+
