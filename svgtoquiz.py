@@ -29,7 +29,7 @@ INKSCAPE_PATH = '/usr/bin/inkscape'
 SVGTOPNG = 'rsvg'
 # SVGTOPNG = 'inkscape'
 
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 DESCRIPTION ="""Work through a given svg file, turning every path whose
 id matches a given regular expression into a Mnemosyne entry where the
 question is the id, or looked up in a separate csv file, and the answer is
@@ -149,10 +149,11 @@ class Options:
 	if options.name:
 	    prev_srcpath_svg = self.srcpath_svg
 	    prev_srcpath_csv = self.srcpath_csv
-	    self.setName(options.name)
+	    self.setName(options.name.decode('utf-8'))
 	    self.srcpath_svg = prev_srcpath_svg
 	    self.srcpath_csv = prev_srcpath_csv
-	if options.category:    self.category    = options.category
+	if options.category:
+	    self.category    = options.category.decode('utf-8')
 
 	self.zoom	    = options.zoom
 	self.random_order   = options.random_order
@@ -411,7 +412,7 @@ class MnemosyneItem:
 	self.id = id
 	self.q = q
 	self.a = a
-	self.cat = cat 
+	self.cat = cat
 
     def toElement(self, dom):
 	"""
