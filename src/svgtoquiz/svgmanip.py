@@ -47,6 +47,10 @@ except:
 
 #----------------------------------------------------------------------
 
+class BadCSVEncoding:
+    def __init__(self):
+	pass
+
 def get_all_paths(svg_ele, getname_func):
     """
     Given an svg element node, calls getname_func for all path elements
@@ -115,7 +119,7 @@ def svg_to_png(svg_path, png_path):
 	command = u' '.join([RSVG_PATH, '--x-zoom', zoom,
 				        '--y-zoom', zoom,
 				        svg_path, png_path])
-    os.system(command.encode('utf-8'))
+    os.system(command.encode(options.encoding))
 
 def make_image(svg, (name, node), dir_path, prefix=''):
     prev_fill = fill_style(node, options.color)
@@ -123,7 +127,7 @@ def make_image(svg, (name, node), dir_path, prefix=''):
     svg_path = os.path.join(dir_path, prefix + name + '.svg')
     png_path = os.path.join(dir_path, prefix + name + '.png')
 
-    fp = codecs.open(svg_path, 'w', 'utf-8')
+    fp = codecs.open(svg_path, 'w', 'UTF-8')
     svg.writexml(fp)
     fp.close()
 
@@ -168,22 +172,27 @@ class UTF8Recoder:
         return self
 
     def next(self):
-        return self.reader.next().encode("utf-8")
+        #return self.reader.next().encode("UTF-8")
+        r = self.reader.next()
+	s = r.encode("UTF-8")
+	return s
 
 class UnicodeReader:
     """
     A CSV reader which will iterate over lines in the CSV file "f",
     which is encoded in the given encoding.
-    Taken from the Python library documentation.
+    Modified from the Python library documentation.
     """
 
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+    def __init__(self, f, dialect=csv.excel, encoding="UTF-8", **kwds):
         f = UTF8Recoder(f, encoding)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
     def next(self):
-        row = self.reader.next()
-        return [unicode(s, "utf-8") for s in row]
+        try: row = self.reader.next()
+	except UnicodeDecodeError:
+	    raise BadCSVEncoding()
+        return [unicode(s, "UTF-8") for s in row]
 
     def __iter__(self):
         return self
@@ -192,7 +201,7 @@ def read_name_map(csv_path):
     """
     Read the first two columns of the given csv file into a map.
     """
-    reader = UnicodeReader(open(csv_path, 'rb'))
+    reader = UnicodeReader(open(csv_path, 'rb'), encoding=options.csvencoding)
     data = {}
     for row in reader:
 	data[row[0]] = row[1]
@@ -205,7 +214,7 @@ class UnicodeWriter:
     Taken from the Python library documentation.
     """
 
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+    def __init__(self, f, dialect=csv.excel, encoding="UTF-8", **kwds):
         # Redirect output to a queue
         self.queue = cStringIO.StringIO()
         self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
@@ -213,10 +222,10 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
+        self.writer.writerow([s.encode("UTF-8") for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
-        data = data.decode("utf-8")
+        data = data.decode("UTF-8")
         # ... and reencode it into the target encoding
         data = self.encoder.encode(data)
         # write to the target stream
@@ -239,6 +248,6 @@ def write_name_map(name_map, csv_path=None):
     """
     if csv_path == None: csv_path = options.srcpath_csv
 
-    writer = UnicodeWriter(open(csv_path, 'wb'))
+    writer = UnicodeWriter(open(csv_path, 'wb'), encoding=options.csvencoding)
     writer.writerows(non_ignored(name_map))
 

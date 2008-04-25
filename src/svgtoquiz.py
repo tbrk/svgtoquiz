@@ -28,6 +28,9 @@ import sys, os, codecs
 import xml.dom.minidom
 from svgtoquiz import *
 
+import locale
+locale.setlocale(locale.LC_ALL, '')
+
 def main():
     try: mapdom = xml.dom.minidom.parse(options.srcpath_svg)
     except IOError, e:
@@ -43,6 +46,10 @@ def main():
 
     if options.srcpath_csv:
 	try: name_map = svgmanip.read_name_map(options.srcpath_csv)
+	except svgmanip.BadCSVEncoding:
+	    print >> sys.stderr, 'Bad encoding: ' + options.srcpath_csv,
+	    print >> sys.stderr, '(expected ' + options.csvencoding + ')'
+	    sys.exit(1)
 	except:
 	    if not hasGUI:
 		print >> sys.stderr, 'Unable to read ' + options.srcpath_csv
@@ -79,8 +86,8 @@ def main():
 				      options.category, options.q_img)
     edom = export.toXmlDom()
     xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
-		      'wb', 'utf-8')
-    edom.writexml(xfp, encoding='utf-8')
+		      'wb', 'UTF-8')
+    edom.writexml(xfp, encoding='UTF-8')
     xfp.close()
 
     svgmanip.svg_to_png(options.srcpath_svg,

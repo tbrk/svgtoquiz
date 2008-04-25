@@ -25,6 +25,7 @@ Mnemosyne."""
 import sys, re, os
 import version
 from optparse import OptionParser
+import locale
 
 class Options:
     parser = OptionParser(usage="%prog [options] <name>",
@@ -48,6 +49,8 @@ class Options:
 		      help='randomly shuffle the exported results')
     parser.add_option('--csv-path', dest='srcpath_csv', metavar='PATH',
 		      help='specify a csv file explicitly')
+    parser.add_option('--csv-encoding', dest='csvencoding', metavar='ENCODING',
+		      help='specify the encoding of the csv file explicitly')
     parser.add_option('--match-csv', dest='match_csv',
 		      action='store_true', default=False,
 		      help='ignore paths with ids missing from the csv file')
@@ -106,18 +109,20 @@ class Options:
 	    sys.exit(1)
 
 	if options.srcpath_csv:
-	    self.srcpath_csv = options.srcpath_csv.decode('utf-8')
+	    self.srcpath_csv = options.srcpath_csv.decode(self.encoding)
+	if options.csvencoding:
+	    self.csvencoding = options.csvencoding
 	self.setStateRegex(options.id_regex, options.not_id_regex)
 	if options.dstpath:
-	    self.setDstPath(options.dstpath.decode('utf-8'))
+	    self.setDstPath(options.dstpath.decode(self.encoding))
 	if options.name:
 	    prev_srcpath_svg = self.srcpath_svg
 	    prev_srcpath_csv = self.srcpath_csv
-	    self.setName(options.name.decode('utf-8'))
+	    self.setName(options.name.decode(self.encoding))
 	    self.srcpath_svg = prev_srcpath_svg
 	    self.srcpath_csv = prev_srcpath_csv
 	if options.category:
-	    self.category    = options.category.decode('utf-8')
+	    self.category    = options.category.decode(self.encoding)
 
 	self.zoom	    = options.zoom
 	self.random_order   = options.random_order
@@ -133,6 +138,9 @@ class Options:
 	else:			 self.prefix = ''
 
     def __init__(self, progname):
+	(self.lang, self.encoding) = locale.getdefaultlocale()
+	self.csvencoding = self.encoding
+
 	self.setStateRegex()
 	self.progname = progname
 
