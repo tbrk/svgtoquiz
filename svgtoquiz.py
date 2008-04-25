@@ -649,10 +649,7 @@ def main():
 
     if options.run_csvgui:
 	if GUI:
-	    namesAndNodes = read_names_and_nodes(svg, name_map)
-	    tmpdir = mkdtemp()
-	    converter = ConverterThread(mapdom, svg, namesAndNodes, tmpdir, '')
-	    guicsv_main(name_map, converter, tmpdir, write_name_map)
+	    guicsv_main(mapdom, svg, name_map)
 	else:
 	    print >> sys.stderr, 'Sorry, the GUI feature is not available.'
 	    print >> sys.stderr, 'One of the requirements is not satisfied:'
