@@ -27,21 +27,22 @@
 import sys, os, codecs
 import xml.dom.minidom
 from svgtoquiz import *
-
 import locale
-locale.setlocale(locale.LC_ALL, '')
 
 def main():
+    locale.setlocale(locale.LC_ALL, '')
+    options.parseArguments(sys.argv[1:])
+
     try: mapdom = xml.dom.minidom.parse(options.srcpath_svg)
     except IOError, e:
 	print >> sys.stderr, 'Could not open ' + options.srcpath_svg,
 	print >> sys.stderr, '(' + e.strerror + ')'
-	sys.exit(1)
+	return 1
 
     svgs = mapdom.getElementsByTagName('svg')
     if svgs.length == 0:
 	print >> sys.stderr, 'The document does not contain an svg element.'
-	sys.exit(1)
+	return 1
     svg = svgs[0]
 
     if options.srcpath_csv:
@@ -49,7 +50,7 @@ def main():
 	except svgmanip.BadCSVEncoding:
 	    print >> sys.stderr, 'Bad encoding: ' + options.srcpath_csv,
 	    print >> sys.stderr, '(expected ' + options.csvencoding + ')'
-	    sys.exit(1)
+	    return 1
 	except:
 	    if not hasGUI:
 		print >> sys.stderr, 'Unable to read ' + options.srcpath_csv
@@ -67,7 +68,7 @@ def main():
 	    print >> sys.stderr, '  * Tkinter and tkMessageBox (python-tk)'
 	    print >> sys.stderr, '  * Python Image Library (python-imaging,'
 	    print >> sys.stderr, '  *                       python-imaging-tk)'
-	    sys.exit(1)
+	    return 1
 
     try:
 	try:	os.stat(options.dstpath)
@@ -75,7 +76,7 @@ def main():
     except OSError, e:
 	print >> sys.stderr, 'Could not create ' + options.dstpath,
 	print >> sys.stderr, '(' + e.strerror + ')'
-	sys.exit(1)
+	return 1
 
     namesAndNodes = svgmanip.read_names_and_nodes(svg, name_map)
     names = svgmanip.make_state_maps(svg, namesAndNodes, options.dstpath,
@@ -92,7 +93,6 @@ def main():
 
     svgmanip.svg_to_png(options.srcpath_svg,
 			os.path.join(options.dstpath, options.q_img))
-
-options.parseArguments(sys.argv[1:])
-main()
+    
+    return 0
 
