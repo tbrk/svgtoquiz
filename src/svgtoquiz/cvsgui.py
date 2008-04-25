@@ -28,8 +28,9 @@
 
 import sys, os, time
 import threading
+import tempfile
 from options import options
-from svgmanip import make_image, write_name_map
+import svgmanip
 
 # for the gui csv editor
 from Tkinter import *
@@ -102,7 +103,8 @@ class ConverterThread (threading.Thread):
 
     def task(self, i):
 	# print "converting: " + str(i) + "..."
-	make_image(self.svg, self.namesAndNodes[i], self.dir_path, self.prefix)
+	svgmanip.make_image(self.svg, self.namesAndNodes[i],
+			    self.dir_path, self.prefix)
 
 	self.lock.acquire()
 	self.pending[i] = False
@@ -133,9 +135,11 @@ class Application(Frame):
     
     def showStatus(self):
 	numdone = self.converter.numberDone()
-	self.labStatus['text'] = '%d / %d [%d done]' % (self.current+1,
-						        self.numnames,
-						        numdone)
+	if numdone == self.numnames:
+	    self.labStatus['text'] = '%d / %d' % (self.current+1, self.numnames)
+	else:
+	    self.labStatus['text'] = '%d / %d [%d]' % (self.current+1,
+						       self.numnames, numdone)
 	if numdone < self.numnames:
 	    self.after(100, self.showStatus)
     
@@ -191,7 +195,7 @@ class Application(Frame):
     def saveData(self):
 	self.setCurrentName()
 	if self.dirty and tkMessageBox.askokcancel(message='Really save?'):
-	    write_name_map(self.name_map)
+	    svgmanip.write_name_map(self.name_map)
 	    self.dirty = False
     
     def cleanTmpDir(self):
@@ -258,15 +262,16 @@ class Application(Frame):
 	self.entryName.pack(side='left', fill='x', expand='yes')
 
     def __init__(self, svg, mapdom, name_map={}, master=None):
-	self.tmpdir = mkdtemp()
+	self.tmpdir = tempfile.mkdtemp()
 
 	if name_map:
 	    self.name_map = name_map
 	else:
 	    self.name_map = {}
 
-	namesAndNodes = read_names_and_nodes(svg, name_map)
-	self.converter = ConverterThread(mapdom, svg, namesAndNodes, tmpdir, '')
+	namesAndNodes = svgmanip.read_names_and_nodes(svg, name_map)
+	self.converter = ConverterThread(mapdom, svg, namesAndNodes,
+					 self.tmpdir, '')
 
 	self.names = self.converter.getNames()
 	self.numnames = len(self.names)
@@ -288,7 +293,7 @@ class Application(Frame):
 
 	self.updateWindow()
 
-def guicsv_main(mapdom, svg, name_map):
+def start(mapdom, svg, name_map):
     root = Tk()
     root.title('svgtoquiz: edit csv file')
     app = Application(svg, mapdom, name_map=name_map, master=root)

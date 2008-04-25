@@ -12,7 +12,7 @@ The Africa.csv file was created by running:
 German names were replaced with their equivalents in English.
 
 Run:
-svgtoquiz.py --zoom=.4 --randomize --match-csv-file Africa
+svgtoquiz.py --zoom=.4 --randomize --match-csv Africa
 
 Then import form:
     ~/.mnemosyne/maps/Africa.xml
