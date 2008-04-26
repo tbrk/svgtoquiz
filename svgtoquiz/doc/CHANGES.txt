@@ -1,0 +1,21 @@
+svgtoquiz-1.3.0	    20070427
+    * Better modularisation.
+    * Respect the current locale.
+    * Fix code for Serbia in examples/Blank_map_of_Europe.svg
+      (thanks to Tobias Hall)
+    * Configure for setuptools.
+
+svgtoquiz-1.2.3	    20070403
+    * Separate gui features into a separate file to reduce the number of
+      dependencies required to use basic features.
+    * Handle unicode categories.
+    * Minor bug fixes.
+
+svgtoquiz-1.2.0	    20070403
+    * New --gui-csv-edit feature for creating csv files.
+    * Fixed several unicode bugs.
+    * Many thanks to Patrick Kenny for testing and feedback.
+
+svgtoquiz-1.0.0	    20070326
+    * First version released.
+
