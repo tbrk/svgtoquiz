@@ -13,18 +13,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the BSD
 # License for more details.
 #
-# 20080402 T. Bourke
-#   Original code to present a basic GUI for creating csv files that map svg
-#   ids to text strings.
-#   This module is imported from svgtoquiz.py
-#
-# REQUIRES:
-#   * Developed in python 2.5
-#   * Tkinter, and tkMessageBox (python-tk)
-#   * Python Image Library (python-imaging,
-#			    python-imaging-tk)
-#
-#----------------------------------------------------------------------
 
 import sys, os, time
 import threading

@@ -1,4 +1,3 @@
-* Package up with Dist tools (maybe using the egg system).
 * Improve support for use on Windows.
 * Create subdirectories inside ~/.mnemosyne/maps by default.
 * Add a feature for grouping multiple paths (e.g. islands)

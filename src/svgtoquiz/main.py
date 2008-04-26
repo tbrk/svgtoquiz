@@ -16,7 +16,8 @@
 
 import sys, os, codecs
 import xml.dom.minidom
-import cvsgui, mnemosyne, options, svgmanip
+import cvsgui, mnemosyne, svgmanip
+from options import options
 import locale
 
 def main():
