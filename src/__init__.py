@@ -6,7 +6,7 @@ __all__ = ['options', 'svgmanip', 'mnemosyne',
 import options
 import svgmanip
 import mnemosyne
-from svgtoquiz import main
+from main import main
 from version import __version__
 
 try:
