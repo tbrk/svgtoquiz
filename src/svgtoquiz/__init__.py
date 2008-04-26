@@ -7,6 +7,7 @@ import options
 import svgmanip
 import mnemosyne
 from version import __version__
+from main import main
 
 try:
     import cvsgui
@@ -14,5 +15,6 @@ try:
 except ImportError:
     hasGUI=False
 
+del version
 options = options.options
 

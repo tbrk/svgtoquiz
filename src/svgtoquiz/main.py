@@ -16,7 +16,7 @@
 
 import sys, os, codecs
 import xml.dom.minidom
-from svgtoquiz import *
+import cvsgui, mnemosyne, options, svgmanip
 import locale
 
 def main():
