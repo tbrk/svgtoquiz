@@ -41,6 +41,10 @@ IGNORE = '_ignore_' # must match decl in svgtoquiz.py
 
 #----------------------------------------------------------------------
 
+class NoNamesError:
+    def __init__(self):
+	pass
+
 class ConverterThread (threading.Thread):
     def __init__(self, dom, svg, namesAndNodes, dir_path, prefix=''):
 	"""
@@ -277,7 +281,7 @@ class Application(Frame):
 	self.numnames = len(self.names)
 	if self.numnames == 0:
 	    print >> sys.stderr, 'No paths in file.'
-	    sys.exit(1)
+	    raise NoNamesError()
 	self.current = 0
 
 	self.converter.start()
@@ -301,5 +305,4 @@ def start(mapdom, svg, name_map):
     app.mainloop()
     try: root.destroy()
     except: print >> sys.stderr, 'warning: could not destroy tcl/tk root.'
-    sys.exit(1)
 

@@ -13,16 +13,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the BSD
 # License for more details.
 #
-# 20080324 T. Bourke
-#   Original code to generate a Mnemosyne quiz from an SVG file.
-#
-# REQUIRES:
-#   * Developed in python 2.5
-#   * Requires rsvg (part of librsvg2)
-#     although it could be modified to support any svg->png converter.
-#   * threading
-#   * xml.dom.minidom
-#
 
 import sys, os, codecs
 import xml.dom.minidom
@@ -60,7 +50,9 @@ def main():
 
     if options.run_csvgui:
 	if hasGUI:
-	    cvsgui.start(mapdom, svg, name_map)
+	    try: cvsgui.start(mapdom, svg, name_map)
+	    except cvsgui.NoNamesError: return 1
+	    return 0
 	else:
 	    print >> sys.stderr, 'Sorry, the GUI feature is not available.'
 	    print >> sys.stderr, 'One of the requirements is not satisfied:'
