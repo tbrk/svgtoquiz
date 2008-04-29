@@ -1,3 +1,0 @@
-* Add support for svg groups, e.g. to handle island nations.
-* Write a man page, and generate a pdf version for windows.
-* Improve i18n: use gettext to allow translations
