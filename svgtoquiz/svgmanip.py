@@ -15,12 +15,8 @@
 #
 
 # NB: rsvg does not seem to work propertly with utf-8 filenames, it gives an
-#     error message: Invalid byte sequence in conversion input
-#     inkscape does work
-RSVG_PATH = '/usr/local/bin/rsvg'
-INKSCAPE_PATH = '/usr/local/bin/inkscape'
-SVGTOPNG = 'rsvg'
-#SVGTOPNG = 'inkscape'
+#     error message: Invalid byte sequence in conversion input.
+#     Inkscape does work.
 
 #----------------------------------------------------------------------
 
@@ -33,19 +29,11 @@ from options import options
 INKSCAPE_DPI = 90.0
 IGNORE = '_ignore_'
 
-try:
-    if SVGTOPNG == 'rsvg':
-	testname = 'RSVG_PATH'
-	testpath = RSVG_PATH
-    else:
-	testname = 'INKSCAPE_PATH'
-	testpath = INKSCAPE_PATH
-    os.stat(testpath)
-except:
-    print >> sys.stderr, 'invalid ' + testname + ': ' + testpath
-    sys.exit(1)
-
 #----------------------------------------------------------------------
+
+def debug(str):
+    if options.debug:
+	print >> sys.stderr, str
 
 class BadCSVEncoding:
     def __init__(self):
@@ -106,17 +94,20 @@ def svg_to_png(svg_path, png_path):
     """
     Convert the svg_path file into a png_path file.
     """
-    if SVGTOPNG == 'inkscape':
-	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom),
-				0.1),
+    debug('-svgtopng: ' + options.svgtopng_prog
+	  + ' (' + options.svgtopng_path + ')')
+    if options.svgtopng_prog == 'inkscape':
+	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
 			    10000)
-	command = u' '.join([INKSCAPE_PATH, '--without-gui',
+	command = u' '.join([options.svgtopng_path,
+					    '--without-gui',
 					    '--export-png=' + png_path,
 					    '--export-dpi=' + zoom,
 					    svg_path])
     else:
 	zoom = str(options.zoom)
-	command = u' '.join([RSVG_PATH, '--x-zoom', zoom,
+	command = u' '.join([options.svgtopng_path,
+					'--x-zoom', zoom,
 				        '--y-zoom', zoom,
 				        svg_path, png_path])
     os.system(command.encode(options.encoding))
@@ -127,9 +118,14 @@ def make_image(svg, (name, node), dir_path, prefix=''):
     svg_path = os.path.join(dir_path, prefix + name + '.svg')
     png_path = os.path.join(dir_path, prefix + name + '.png')
 
-    fp = codecs.open(svg_path, 'w', 'UTF-8')
-    svg.writexml(fp)
-    fp.close()
+    try:
+	fp = codecs.open(svg_path, 'w', 'UTF-8')
+	svg.writexml(fp)
+	fp.close()
+    except IOError, reason:
+	print >> sys.stderr, (u'%s: cannot create %s (%s)' %
+			      (options.progname, svg_path, reason))
+	sys.exit(1)
 
     if options.to_png:
 	svg_to_png(svg_path, png_path)

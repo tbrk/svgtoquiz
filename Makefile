@@ -29,7 +29,7 @@ clean:
 	-@rm -r build
 
 clobber: clean
-	-@rm -r $(SRCDIR)/svgtoquiz.egg-info
+	-@rm -r svgtoquiz.egg-info
 	-@rm -r develop dist
 	-@rm env.sh
 

@@ -4,6 +4,13 @@ svgtoquiz-1.3.0	    20070427
     * Fix code for Serbia in examples/Blank_map_of_Europe.svg
       (thanks to Tobias Hall)
     * Configure for setuptools.
+    * Options for extracting documentation (to support eggs).
+    * Warning for image paths that might be non-portable.
+    * Debugging traces
+    * Fixed bug in exported image paths.
+    * Command-line options for specifying paths to rsvg or inkscape.
+    * Use two-directory scheme for dstdir default
+      (as suggested by Patrick Kenny)
 
 svgtoquiz-1.2.3	    20070403
     * Separate gui features into a separate file to reduce the number of

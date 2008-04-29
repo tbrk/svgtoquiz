@@ -9,11 +9,13 @@ Downloaded from:
 The Map_of_USA.csv file was created by copying and pasting from Wikipedia.
 
 Run:
-svgtoquiz.py --zoom=1.2 --randomize --category='USA States' --id-regex='^(..)_1_$' Map_of_USA
+svgtoquiz --zoom=1.2 --randomize \
+	  --name='States_of_the_USA' \
+	  --id-regex='^(..)_1_$' Map_of_USA
 
 Then import form:
-    ~/.mnemosyne/maps/Map_of_USA.xml
+    ~/.mnemosyne/maps/States_of_the_USA/Map_of_USA.xml
 
 To view or edit the associated csv file:
-    ../svgtoquiz.py --id-regex '^(..)_1_$' --gui-csv-edit Map_of_USA
+    ../svgtoquiz --id-regex '^(..)_1_$' --gui-csv-edit Map_of_USA
 

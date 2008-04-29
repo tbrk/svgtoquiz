@@ -9,13 +9,11 @@ from setuptools import setup
 setup(name		= 'svgtoquiz',
       version		= '1.3.0',
       packages		= ['svgtoquiz'],
-      package_dir	= { '' : 'src' },
 
       # for gui:
       extras_require = { 'gui' : ['Tkinter>=2.5', 'PIL>=1.1.6'] },
 
-      #include_package_data = True,
-      package_data = { 'svgtoquiz' : ['examples/*'] },
+      include_package_data = True,
       entry_points = {
 	    'console_scripts'	      : [ 'svgtoquiz = svgtoquiz:main' ],
 	    'setuptools.installation' : [ 'svgtoquiz = svgtoquiz:main' ]},

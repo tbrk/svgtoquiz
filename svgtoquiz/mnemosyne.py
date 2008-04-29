@@ -14,7 +14,7 @@
 # License for more details.
 #
 
-import os, random
+import os, os.path, random, sys
 import xml.dom.minidom
 from options import options
 
@@ -147,7 +147,13 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
     e = MnemosyneExport()
 
     if qimgfile:
-	qpath = os.path.join(options.dstpath, qimgfile)
+	qpath = os.path.join(options.exportpath, qimgfile)
+
+	if os.path.isabs(qpath) or qpath.startswith('./'):
+	    print >> sys.stderr, (
+		"%s: warning: the image path '%s' may be unsuitable for sharing"
+		% (options.progname, qpath))
+
 	qimg = '<img src="%s">' % qpath
     else:
 	qimg = ''

@@ -1,12 +1,3 @@
-* Improve support for use on Windows.
-* Create subdirectories inside ~/.mnemosyne/maps by default.
-* Add a feature for grouping multiple paths (e.g. islands)
-* Try harder to discover paths for rsvg and inkscape.
-* Write a man page (generate a pdf version for windows).
+* Add support for svg groups, e.g. to handle island nations.
+* Write a man page, and generate a pdf version for windows.
 * Improve i18n: use gettext to allow translations
-
-Enhancements
-------------
-* Add more options for parsing svg files.
-  (handle groups, objects other than paths)
-

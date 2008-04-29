@@ -23,55 +23,81 @@ The script produces a set of image files and xml ready for import into
 Mnemosyne."""
 
 import sys, re, os
-import version
+from version import __version__
 from optparse import OptionParser
 import locale
 
+def debug(str):
+    if options.debug:
+	print >> sys.stderr, str
+
 class Options:
     parser = OptionParser(usage="%prog [options] <name>",
-			  version="%prog " + version.__version__,
+			  version="%prog " + __version__,
 			  description=DESCRIPTION)
-    parser.add_option('-c', '--category', dest='category', metavar='CATEGORY',
+
+    parser.add_option('-c', '--category', dest='category', metavar='<category>',
 		      help='specify the category')
-    parser.add_option('-z', '--zoom', dest='zoom', metavar='FLOAT', default=1.0,
+    parser.add_option('-z', '--zoom', dest='zoom', metavar='<float>',
+		      default=1.0,
 		      help='enlarge or reduce the produced images')
-    parser.add_option('-s', '--id-regex', dest='id_regex', metavar='REGEX',
+
+    parser.add_option('-s', '--id-regex', dest='id_regex', metavar='<regex>',
 		      help='match path ids (regex with one bracketed group)')
     parser.add_option('-i', '--not-id-regex', dest='not_id_regex',
-		      metavar='REGEX',
+		      metavar='<regex>',
 		      help='reject path ids (regex for subset of -s)')
-    parser.add_option('-d', '--dst-path', dest='dstpath', metavar='PATH',
+
+    parser.add_option('-d', '--dst-path', dest='dstpath', metavar='<path>',
 		      help='specify a location to put the results.')
-    parser.add_option('-n', '--name', dest='name', metavar='STRING',
+    parser.add_option('-n', '--name', dest='name', metavar='<string>',
 		      help='use a different name')
     parser.add_option('-r', '--randomize', dest='random_order',
 		      action='store_true', default=False,
 		      help='randomly shuffle the exported results')
-    parser.add_option('--csv-path', dest='srcpath_csv', metavar='PATH',
+
+    parser.add_option('--csv-path', dest='srcpath_csv', metavar='<path>',
 		      help='specify a csv file explicitly')
-    parser.add_option('--csv-encoding', dest='csvencoding', metavar='ENCODING',
+    parser.add_option('--csv-encoding', dest='csvencoding',
+		      metavar='<encoding>',
 		      help='specify the encoding of the csv file explicitly')
     parser.add_option('--match-csv', dest='match_csv',
 		      action='store_true', default=False,
 		      help='ignore paths with ids missing from the csv file')
+    parser.add_option('-e', '--gui-csv-edit', action='store_true',
+		      dest='run_csvgui', default=False,
+		      help='run the gui csv editor')
+
     parser.add_option('-m', '--show-matches', dest='show_names',
 		      action='store_true', default=False,
 		      help='write the matched ids to stdout')
+
     parser.add_option('--color', dest='color', default='#ff0000',
-		      metavar='HTMLCOLOR',
+		      metavar='<htmlcolor>',
 		      help='color to use for path hilighting.')
+
     parser.add_option('--no-vice-versa', action='store_false',
 		      dest='create_inverse', default=True,
 		      help='do not produce vice-versa entries')
     parser.add_option('--only-vice-versa', action='store_false',
 		      dest='create_normal', default=True,
 		      help='only produce vice-versa entries')
+
     parser.add_option('--no-prefix', action='store_false',
 		      dest='prefix_names', default=True,
 		      help='do not add a prefix to filenames')
-    parser.add_option('-e', '--gui-csv-edit', action='store_true',
-		      dest='run_csvgui', default=False,
-		      help='run the gui csv editor')
+
+    parser.add_option('--svgtopng', metavar='<[path/]rsvg|[path/]inkscape>',
+		      dest='svgtopng_path', default='rsvg', help=
+	'specify how to convert svg files into png files (rsvg or inkscape)')
+
+    parser.add_option('--debug', action='store_true',
+		      dest='debug', default=False,
+		      help='show debugging trace')
+
+    parser.add_option('--extract-docs', metavar='<path>',
+		      dest='extract_docs', default=None, help=
+		      'extract documentation and example files to <path>')
 
     def setName(self, name):
 	name = re.sub(r'.svg$', '', name)
@@ -103,7 +129,12 @@ class Options:
     def parseArguments(self, arguments):
 	(options, args) = self.parser.parse_args(arguments)
 
+	self.debug	    = options.debug
+	debug('-svgtoquiz ' + __version__)
+
 	if args: self.setName(args[0])
+	elif options.extract_docs != None:
+	    self.setName('noname')
 	else:
 	    print >> sys.stderr, '%s: no name specified.' % self.progname
 	    sys.exit(1)
@@ -113,16 +144,44 @@ class Options:
 	if options.csvencoding:
 	    self.csvencoding = options.csvencoding
 	self.setStateRegex(options.id_regex, options.not_id_regex)
-	if options.dstpath:
-	    self.setDstPath(options.dstpath.decode(self.encoding))
+
 	if options.name:
 	    prev_srcpath_svg = self.srcpath_svg
 	    prev_srcpath_csv = self.srcpath_csv
 	    self.setName(options.name.decode(self.encoding))
 	    self.srcpath_svg = prev_srcpath_svg
 	    self.srcpath_csv = prev_srcpath_csv
+
 	if options.category:
-	    self.category    = options.category.decode(self.encoding)
+	    self.category   = options.category.decode(self.encoding)
+
+	if options.dstpath:
+	    self.setDstPath(options.dstpath.decode(self.encoding))
+	elif self.name:
+	    self.setDstPath(os.path.join(u'maps', self.name))
+
+	progmatch = re.search(r'(rsvg|inkscape)[^/\\]*$',
+			      options.svgtopng_path)
+	if progmatch == None:
+	    print >> sys.stderr, ('%s: svgtopng can only be rsvg or inkscape.'
+				  % self.progname)
+	    sys.exit(1)
+	else:
+	    self.svgtopng_prog = progmatch.group(1)
+	    self.svgtopng_path = options.svgtopng_path
+	    try:
+		debug(' '.join(['-testing: ', self.svgtopng_path, '--version']))
+		proc = os.popen(' '.join([self.svgtopng_path, '--version']),
+				'r')
+		debug('-done. now reading...')
+		version = proc.read()
+		debug('-' + version.strip())
+		r = proc.close()
+		if r != None: raise None
+	    except:
+		print >> sys.stderr, ('%s: cannot execute svgtopng: %s'
+				      % (self.progname, self.svgtopng_path))
+		sys.exit(1)
 
 	self.zoom	    = options.zoom
 	self.random_order   = options.random_order
@@ -133,6 +192,8 @@ class Options:
 	self.color	    = options.color
 	self.match_csv	    = options.match_csv
 	self.run_csvgui	    = options.run_csvgui
+
+	self.extract_docs   = options.extract_docs
 
 	if options.prefix_names: self.prefix = self.name + '_'
 	else:			 self.prefix = ''
@@ -145,6 +206,7 @@ class Options:
 	self.progname = progname
 
 	self.name = None
+	self.debug = False
 
 	self.setDstPath('maps')
 	self.to_png         = True
