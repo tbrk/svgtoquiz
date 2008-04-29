@@ -15,10 +15,14 @@ develop!
 	mkdir -p $(STAGINGDIR)
 	$(PYTHON) setup.py develop --install-dir=$(STAGINGDIR)
 
-dist: bdist_egg bdist_wininst
+dist: bdist_egg sdist
+	# bdist_wininst
 
 bdist_egg!
 	$(PYTHON) setup.py bdist_egg
+
+sdist!
+	$(PYTHON) setup.py sdist
 
 bdist_wininst!
 	$(PYTHON) setup.py bdist_wininst
