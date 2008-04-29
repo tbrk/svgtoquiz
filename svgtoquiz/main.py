@@ -14,7 +14,7 @@
 # License for more details.
 #
 
-import sys, os, os.path, codecs
+import sys, os, os.path, codecs, stat
 import xml.dom.minidom
 import cvsgui, mnemosyne, svgmanip
 from options import options
@@ -53,6 +53,10 @@ def main():
 		       resource_listdir(__name__, 'doc'))):
 	    if os.path.isdir(f): continue
 	    shutil.copy(f, dstdir)
+	    os.chmod(os.path.join(dstdir, os.path.basename(f)),
+		     stat.S_IREAD | stat.S_IWRITE |
+		     stat.S_IRGRP | stat.S_IWGRP |
+		     stat.S_IROTH)
 
 	return 0
 

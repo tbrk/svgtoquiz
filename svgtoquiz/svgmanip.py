@@ -94,22 +94,38 @@ def svg_to_png(svg_path, png_path):
     """
     Convert the svg_path file into a png_path file.
     """
-    debug('-svgtopng: ' + svg_path + ' -> ' + png_path)
+
+    if svg_path.find(' '): svg_path = '"' + svg_path + '"'
+    if png_path.find(' '): png_path = '"' + png_path + '"'
+
     if options.svgtopng_prog == 'inkscape':
 	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
 			    10000)
-	command = u' '.join([options.svgtopng_path,
-					    '--without-gui',
-					    '--export-png=' + png_path,
-					    '--export-dpi=' + zoom,
-					    svg_path])
+	cmd = u' '.join([options.svgtopng_path,
+			 '--without-gui',
+			 '--export-png=' + png_path,
+			 '--export-dpi=' + zoom,
+			 svg_path])
     else:
 	zoom = str(options.zoom)
-	command = u' '.join([options.svgtopng_path,
-					'--x-zoom', zoom,
-				        '--y-zoom', zoom,
-				        svg_path, png_path])
-    os.system(command.encode(options.encoding))
+	cmd = u' '.join([options.svgtopng_path,
+			 '--x-zoom', zoom,
+			 '--y-zoom', zoom,
+			 svg_path, png_path])
+    cmd = cmd.encode(options.encoding)
+    debug('-svgtopng: ' + cmd)
+    data = ""
+    try:
+	proc = os.popen(cmd, 'r')
+	data = proc.read()
+	r = proc.close()
+    except OSError, reason:
+	print >> sys.stderr, reason
+	r = 1
+    if r != None:
+	print >> sys.stderr, ("%s: svg to png conversion failed.\n"
+			      % options.progname)
+	sys.exit(1)
 
 def make_image(svg, (name, node), dir_path, prefix=''):
     prev_fill = fill_style(node, options.color)

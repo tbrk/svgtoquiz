@@ -239,12 +239,14 @@ class Options:
 	else:			 self.prefix = ''
 
     def debugPrint(self):
-	variables = [('dstpath',     self.dstpath),
-		     ('exportpath',  self.exportpath),
-		     ('srcpath_svg', self.srcpath_svg),
-		     ('srcpath_csv', self.srcpath_csv),
-		     ('dstname_xml', self.dstname_xml),
-		     ('q_img',	     self.q_img)]
+	variables = [('dstpath',       self.dstpath),
+		     ('exportpath',    self.exportpath),
+		     ('srcpath_svg',   self.srcpath_svg),
+		     ('srcpath_csv',   self.srcpath_csv),
+		     ('dstname_xml',   self.dstname_xml),
+		     ('q_img',	       self.q_img),
+		     ('svgtopng_prog', self.svgtopng_prog),
+		     ('svgtopng_path', self.svgtopng_path)]
 	for v in variables: print >> sys.stderr, '%s:\t%s' % v
 
     def __init__(self, progname):
