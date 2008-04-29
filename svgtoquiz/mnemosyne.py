@@ -59,8 +59,8 @@ class MnemosyneItem:
 	e.setAttribute('id', self.id)
 	e.setIdAttribute('id')
 
-	for (a, v) in self.defatts.iteritems():
-	    e.setAttribute(a, v)
+	#for (a, v) in self.defatts.iteritems():
+	#    e.setAttribute(a, v)
 	e.appendChild(dom.createTextNode('\n'))
 	e.appendChild(makeTextNode(dom, 'cat', self.cat))
 	e.appendChild(dom.createTextNode('\n'))

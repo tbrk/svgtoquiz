@@ -9,8 +9,10 @@ svgtoquiz-1.3.0	    20070427
     * Debugging traces
     * Fixed bug in exported image paths.
     * Command-line options for specifying paths to rsvg or inkscape.
-    * Use two-directory scheme for dstdir default
-      (as suggested by Patrick Kenny)
+    * Use two-directory scheme for dstdir default, as suggested by Patrick Kenny
+    * Per feedback from Paul Chivers:
+      -allow spaces in executable paths
+      -do not add learning data to xml output
 
 svgtoquiz-1.2.3	    20070403
     * Separate gui features into a separate file to reduce the number of

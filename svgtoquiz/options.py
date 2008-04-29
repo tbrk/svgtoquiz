@@ -161,14 +161,17 @@ class Options:
 	    self.setDstPath(os.path.join(u'maps', self.name))
 
 	progmatch = re.search(r'(rsvg|inkscape)[^/\\]*$',
-			      options.svgtopng_path)
+			      options.svgtopng_path, re.IGNORECASE)
 	if progmatch == None:
 	    print >> sys.stderr, ('%s: svgtopng can only be rsvg or inkscape.'
 				  % self.progname)
 	    sys.exit(1)
 	else:
-	    self.svgtopng_prog = progmatch.group(1)
-	    self.svgtopng_path = options.svgtopng_path
+	    self.svgtopng_prog = progmatch.group(1).lower()
+	    if options.svgtopng_path.strip().find(' '):
+		self.svgtopng_path = '"' + options.svgtopng_path.strip() + '"'
+	    else:
+		self.svgtopng_path = options.svgtopng_path.strip()
 	    try:
 		debug(' '.join(['-testing: ', self.svgtopng_path, '--version']))
 		proc = os.popen(' '.join([self.svgtopng_path, '--version']),
@@ -197,6 +200,15 @@ class Options:
 
 	if options.prefix_names: self.prefix = self.name + '_'
 	else:			 self.prefix = ''
+
+    def debugPrint(self):
+	variables = [('dstpath',     self.dstpath),
+		     ('exportpath',  self.exportpath),
+		     ('srcpath_svg', self.srcpath_svg),
+		     ('srcpath_csv', self.srcpath_csv),
+		     ('dstname_xml', self.dstname_xml),
+		     ('q_img',	     self.q_img)]
+	for v in variables: print >> sys.stderr, '%s:\t%s' % v
 
     def __init__(self, progname):
 	(self.lang, self.encoding) = locale.getdefaultlocale()

@@ -56,6 +56,8 @@ def main():
 
 	return 0
 
+    if options.debug: options.debugPrint()
+
     debug('-destination directory: ' + options.dstpath)
     debug('-parsing: ' + options.srcpath_svg)
     try: mapdom = xml.dom.minidom.parse(options.srcpath_svg)

@@ -94,8 +94,7 @@ def svg_to_png(svg_path, png_path):
     """
     Convert the svg_path file into a png_path file.
     """
-    debug('-svgtopng: ' + options.svgtopng_prog
-	  + ' (' + options.svgtopng_path + ')')
+    debug('-svgtopng: ' + svg_path + ' -> ' + png_path)
     if options.svgtopng_prog == 'inkscape':
 	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
 			    10000)
