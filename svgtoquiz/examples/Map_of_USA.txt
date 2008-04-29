@@ -10,8 +10,8 @@ The Map_of_USA.csv file was created by copying and pasting from Wikipedia.
 
 Run:
 svgtoquiz --zoom=1.2 --randomize \
-	  --name='States_of_the_USA' \
-	  --id-regex='^(..)_1_$' Map_of_USA
+	  --name=States_of_the_USA \
+	  --id-regex="^(..)_1_$" Map_of_USA
 
 Then import form:
     ~/.mnemosyne/maps/States_of_the_USA/Map_of_USA.xml

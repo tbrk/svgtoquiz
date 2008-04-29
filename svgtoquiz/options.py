@@ -25,7 +25,7 @@ Mnemosyne."""
 import sys, re, os
 from version import __version__
 from optparse import OptionParser
-import locale
+import locale, platform
 
 def debug(str):
     if options.debug:
@@ -88,7 +88,7 @@ class Options:
 		      help='do not add a prefix to filenames')
 
     parser.add_option('--svgtopng', metavar='<[path/]rsvg|[path/]inkscape>',
-		      dest='svgtopng_path', default='rsvg', help=
+		      dest='svgtopng_path', default=None, help=
 	'specify how to convert svg files into png files (rsvg or inkscape)')
 
     parser.add_option('--debug', action='store_true',
@@ -125,6 +125,66 @@ class Options:
 	else:
 	    self.exportpath = path
 	    self.dstpath = path
+    
+    def getSvgToPngProg(self, path):
+	progmatch = re.search(r'(rsvg|inkscape)[^/\\]*$', path, re.IGNORECASE)
+	if progmatch == None:
+	    print >> sys.stderr, ('%s: svgtopng can only be rsvg or inkscape.'
+				  % self.progname)
+	    sys.exit(1)
+	return progmatch.group(1).lower()
+    
+    def setSvgToPng(self, option_path):
+
+	if platform.system() == 'Windows':
+	    inkscape_try = ['C:\Program Files\Inkscape\inkscape.exe',
+			    'inkscape.exe',
+			    'inkscape']
+	    rsvg_try	 = ['rsvg.exe',
+			    'rsvg']
+	else:
+	    inkscape_try = ['inkscape',
+			    '/usr/bin/inkscape',
+			    '/usr/local/bin/inkscape']
+	    rsvg_try	 = ['rsvg',
+			    '/usr/bin/rsvg',
+			    '/usr/local/bin/rsvg']
+
+	if option_path == None:
+	    svgtopng_try = inkscape_try + rsvg_try
+	else:
+	    if option_path == 'rsvg':
+		svgtopng_try = rsvg_try + inkscape_try
+	    elif option_path == 'inkscape':
+		svgtopng_try = inkscape_try + rsvg_try
+	    else:
+		svgtopng_try = [option_path]
+
+	for exe in svgtopng_try:
+	    found = True
+	    try:
+		exe = exe.strip()
+		if exe.find(' '):
+		    exe = '"' + exe + '"'
+
+		debug(' '.join(['-testing: ', exe, '--version']))
+		proc = os.popen(' '.join([exe, '--version']), 'r')
+		debug('-done. now reading...')
+		version = proc.read()
+		debug('-' + version.strip())
+		r = proc.close()
+		if r != None: raise None
+	    except: found = False
+	    if found: break
+
+	if not found:
+	    print >> sys.stderr, (
+		'%s: cannot find a suitable svgtopng program (inkscape or rsvg)'
+		% self.progname)
+	    sys.exit(1)
+
+	self.svgtopng_prog = self.getSvgToPngProg(exe)
+	self.svgtopng_path = exe
 
     def parseArguments(self, arguments):
 	(options, args) = self.parser.parse_args(arguments)
@@ -160,31 +220,8 @@ class Options:
 	elif self.name:
 	    self.setDstPath(os.path.join(u'maps', self.name))
 
-	progmatch = re.search(r'(rsvg|inkscape)[^/\\]*$',
-			      options.svgtopng_path, re.IGNORECASE)
-	if progmatch == None:
-	    print >> sys.stderr, ('%s: svgtopng can only be rsvg or inkscape.'
-				  % self.progname)
-	    sys.exit(1)
-	else:
-	    self.svgtopng_prog = progmatch.group(1).lower()
-	    if options.svgtopng_path.strip().find(' '):
-		self.svgtopng_path = '"' + options.svgtopng_path.strip() + '"'
-	    else:
-		self.svgtopng_path = options.svgtopng_path.strip()
-	    try:
-		debug(' '.join(['-testing: ', self.svgtopng_path, '--version']))
-		proc = os.popen(' '.join([self.svgtopng_path, '--version']),
-				'r')
-		debug('-done. now reading...')
-		version = proc.read()
-		debug('-' + version.strip())
-		r = proc.close()
-		if r != None: raise None
-	    except:
-		print >> sys.stderr, ('%s: cannot execute svgtopng: %s'
-				      % (self.progname, self.svgtopng_path))
-		sys.exit(1)
+	if options.extract_docs == None:
+	    self.setSvgToPng(options.svgtopng_path)
 
 	self.zoom	    = options.zoom
 	self.random_order   = options.random_order

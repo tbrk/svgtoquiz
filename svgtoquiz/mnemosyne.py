@@ -148,6 +148,7 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 
     if qimgfile:
 	qpath = os.path.join(options.exportpath, qimgfile)
+	qpath = qpath.replace('\\', '/')
 
 	if os.path.isabs(qpath) or qpath.startswith('./'):
 	    print >> sys.stderr, (
@@ -170,6 +171,8 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 	else: fullname = n.replace('_', ' ')
 
 	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
+	n_path = n_path.replace('\\', '/')
+
 	q = '<b>%s?</b>\n%s' % (fullname, qimg)
 	a = '<b>%s</b>\n<img src="%s">' % (fullname, n_path)
 	if options.create_inverse:
