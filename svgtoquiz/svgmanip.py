@@ -20,7 +20,8 @@
 
 #----------------------------------------------------------------------
 
-import sys, re, os, codecs
+import sys, re, os, codecs, subprocess
+import platform
 import csv, cStringIO
 from options import options
 
@@ -38,6 +39,10 @@ def debug(str):
 class BadCSVEncoding:
     def __init__(self):
 	pass
+
+
+# Groups:
+#   Look under <svg>, only pay attention to <g> and <path> elements.
 
 def get_all_paths(svg_ele, getname_func):
     """
@@ -95,8 +100,8 @@ def svg_to_png(svg_path, png_path):
     Convert the svg_path file into a png_path file.
     """
 
-    if svg_path.find(' '): svg_path = '"' + svg_path + '"'
-    if png_path.find(' '): png_path = '"' + png_path + '"'
+    if svg_path.find(' ') > 0: svg_path = '"' + svg_path + '"'
+    if png_path.find(' ') > 0: png_path = '"' + png_path + '"'
 
     if options.svgtopng_prog == 'inkscape':
 	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
@@ -116,18 +121,29 @@ def svg_to_png(svg_path, png_path):
     debug('-svgtopng: ' + cmd)
     data = ""
     try:
-	proc = os.popen(cmd, 'r')
-	data = proc.read()
-	r = proc.close()
+	if platform.system() == 'Windows': cmd = '"' + cmd + '"'
+	proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	pipe = proc.stdout
+	data = pipe.read()
+	pipe.close()
+	r = proc.wait()
     except OSError, reason:
 	print >> sys.stderr, reason
-	r = 1
-    if r != None:
-	print >> sys.stderr, ("%s: svg to png conversion failed.\n"
-			      % options.progname)
-	sys.exit(1)
+	r = -1
+    if r != 0:
+	print >> sys.stderr, ("%s: svg to png conversion failed (%s).\n"
+			      % (r, options.progname))
+	sys.exit(r)
+    debug('-output:\n' + data)
 
 def make_image(svg, (name, node), dir_path, prefix=''):
+    if node.tagName == 'g':
+	prev_branch = node.cloneNode(deep=True)
+	for e in node.getElementsByTagName('path'):
+	    fill_style(e, options.color)
+	for e in node.getElementsByTagName('g'):
+	    fill_style(e, options.color)
+
     prev_fill = fill_style(node, options.color)
 
     svg_path = os.path.join(dir_path, prefix + name + '.svg')
@@ -146,13 +162,37 @@ def make_image(svg, (name, node), dir_path, prefix=''):
 	svg_to_png(svg_path, png_path)
 	os.remove(svg_path)
 
-    fill_style(node, prev_fill)
+    if node.tagName == 'g':
+	parent = node.parentNode
+	parent.replaceChild(prev_branch, node)
+    else:
+	fill_style(node, prev_fill)
+
+def get_group_paths(node, depth, getname_func):
+    for n in node.childNodes:
+	if n.nodeType == node.ELEMENT_NODE:
+	    if node.attributes.has_key('id'):
+		name = getname_func(n.attributes.getNamedItem('id').value)
+	    else:
+		name = ''
+
+	    if (depth > 0) and (n.tagName == 'g'):
+		debug('-' + ('>' * depth) + 'group: "' + name + '"')
+		for gn in get_group_paths(n, depth - 1, getname_func):
+		    yield gn
+	    elif (n.tagName == 'path' or n.tagName == 'g') and (name != ''):
+		yield (name, n)
 
 def read_names_and_nodes(svg, name_map=None):
     if not name_map: name_map = {}
 
+    if options.skip_groups >= 0:
+	f = lambda s, f: get_group_paths(s, options.skip_groups, f)
+    else:
+	f = get_all_paths
+
     namesAndNodes = []
-    for (name, node) in get_all_paths(svg, get_state):
+    for (name, node) in f(svg, get_state):
 	if options.match_csv and not name_map.has_key(name): continue
 	namesAndNodes.append((name, node))
 

@@ -22,7 +22,7 @@ the svg graphic with the given path hilighted.
 The script produces a set of image files and xml ready for import into
 Mnemosyne."""
 
-import sys, re, os
+import sys, re, os, subprocess
 from version import __version__
 from optparse import OptionParser
 import locale, platform
@@ -99,9 +99,13 @@ class Options:
 		      dest='extract_docs', default=None, help=
 		      'extract documentation and example files to <path>')
 
+    parser.add_option('-g', '--groups', metavar='<levels-to-skip>',
+		      dest='skip_groups', default=-1,
+		      help='Respecting groupings at a given depth')
+
     def setName(self, name):
 	name = re.sub(r'.svg$', '', name)
-	self.name        = name
+	self.name        = name.decode(self.encoding)
 	self.srcpath_svg = name + '.svg'
 	self.srcpath_csv = name + '.csv'
 	self.dstname_xml = name + '.xml'
@@ -164,16 +168,20 @@ class Options:
 	    found = True
 	    try:
 		exe = exe.strip()
-		if exe.find(' '):
+		if exe.find(' ') > 0:
 		    exe = '"' + exe + '"'
 
 		debug(' '.join(['-testing: ', exe, '--version']))
-		proc = os.popen(' '.join([exe, '--version']), 'r')
+		
+		proc = subprocess.Popen(' '.join([exe, '--version']),
+					shell=True, stdout=subprocess.PIPE)
+		pipe = proc.stdout
 		debug('-done. now reading...')
-		version = proc.read()
+		version = pipe.read()
 		debug('-' + version.strip())
-		r = proc.close()
-		if r != None: raise None
+		pipe.close()
+		r = proc.wait()
+		if r != 0: raise None
 	    except: found = False
 	    if found: break
 
@@ -233,6 +241,12 @@ class Options:
 	self.match_csv	    = options.match_csv
 	self.run_csvgui	    = options.run_csvgui
 
+	try: self.skip_groups    = int(options.skip_groups)
+	except:
+	    print >> sys.stderr, ("%s: argument of --groups must be numeric.\n"
+				  % self.progname)
+	    sys.exit(1)
+
 	self.extract_docs   = options.extract_docs
 
 	if options.prefix_names: self.prefix = self.name + '_'
@@ -247,7 +261,7 @@ class Options:
 		     ('q_img',	       self.q_img),
 		     ('svgtopng_prog', self.svgtopng_prog),
 		     ('svgtopng_path', self.svgtopng_path)]
-	for v in variables: print >> sys.stderr, '%s:\t%s' % v
+	for v in variables: print >> sys.stderr, '- %s:\t%s' % v
 
     def __init__(self, progname):
 	(self.lang, self.encoding) = locale.getdefaultlocale()
@@ -267,6 +281,7 @@ class Options:
 	self.create_inverse = True
 	self.match_csv	    = False
 	self.color	    = '#ff0000'
+	self.skip_groups    = -1
 	
 options = Options(os.path.basename(sys.argv[0]))
 

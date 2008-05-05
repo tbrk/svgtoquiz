@@ -27,6 +27,9 @@ sdist!
 bdist_wininst!
 	$(PYTHON) setup.py bdist_wininst
 
+tags:
+	(cd svgtoquiz; exctags *.py)
+
 clean:
 	-@rm $(SRCDIR)/svgtoquiz/*.pyc
 	-@rm ez_setup.pyc
@@ -34,6 +37,7 @@ clean:
 
 clobber: clean
 	-@rm -r svgtoquiz.egg-info
+	-@rm svgtoquiz/tags
 	-@rm -r develop dist
 	-@rm env.sh
 
