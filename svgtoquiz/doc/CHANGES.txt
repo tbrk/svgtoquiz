@@ -1,3 +1,16 @@
+svgtoquiz-1.4.0	    20070515
+    * Do not require grouping in --id-regex (just matching now works).
+    * Fix a bug in handling style attributes with multiple entries.
+    * Implement varying levels of debugging detail.
+    * Add an option for preserving intermediate svg files.
+    * Specify more highlighting changes (not just colour)
+    * Fix a bug handling Unicode filenames.
+    * Use Inkscape labels when no other name is given if possible.
+    * Allow brackets and quotes in file names.
+    * Remove newlines completely from the exported xml.
+    * Add support for proposed answerbox overlay feature.
+    * Add the France Region and Department example.
+
 svgtoquiz-1.3.0	    20070427
     * Support for groupings (--groups=<levels-to-skip>)
     * Better modularisation.

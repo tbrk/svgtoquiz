@@ -32,30 +32,34 @@ IGNORE = '_ignore_'
 
 #----------------------------------------------------------------------
 
-def debug(str):
-    if options.debug:
+def debug(priority, str):
+    if priority <= options.debug:
 	print >> sys.stderr, str
 
 class BadCSVEncoding:
     def __init__(self):
 	pass
 
+#----------------------------------------------------------------------
+
+def styleToDict(styleStr):
+    atts = styleStr.split(';')
+    d = {}
+    for att in atts:
+	(name, sep, value) = att.partition(':')
+	if sep != '':
+	    d[name.strip()] = value.strip()
+
+    return d
+
+def dictToStyle(styleDict):
+    return '; '.join([name + ': ' + value
+		      for (name, value) in styleDict.iteritems()])
+
+#----------------------------------------------------------------------
 
 # Groups:
 #   Look under <svg>, only pay attention to <g> and <path> elements.
-
-def get_all_paths(svg_ele, getname_func):
-    """
-    Given an svg element node, calls getname_func for all path elements
-    within, returning a double (name, node) for those that match.
-    """
-    for node in svg_ele.getElementsByTagName('path'):
-	if (node.nodeType == node.ELEMENT_NODE
-		and node.tagName == 'path'
-		and node.attributes.has_key('id')):
-	    name = getname_func(node.attributes.getNamedItem('id').value)
-	    if name: yield (name, node)
-    return
 
 def get_state(name):
     """
@@ -65,43 +69,53 @@ def get_state(name):
     m = options.state_regex.match(name)
     i = options.ignore_regex.match(name)
     if m and not i:
-	try: return m.group(1)
-	except IndexError: return ''
-    return ''
+	try:
+	    subname = m.group(1)
+	    if options.show_names: print subname
+	    return (subname, True)
+	except IndexError:
+	    if options.show_names: print name
+	    return (name, False)
+    return ('', False)
 
-fill_re = re.compile(r'fill:([^;]*)(;|$)')
-def fill_style(ele, newfill = None):
+def set_style(ele, newStyleStr = ''):
+    styleatt = ele.attributes.getNamedItem('style')
+    ele.setAttribute('style', newStyleStr)
+
+def fill_style(ele, newStyle = {}):
     """
     Return the fill style of the given element, changing it (afterward) if
     newfill is given.
     """
 
-    if newfill:
-	newfillstr = 'fill:' + newfill + ';'
+    styleAtt = ele.attributes.getNamedItem('style')
+    if styleAtt == None:
+	ele.setAttribute('style', dictToStyle(newStyle))
+	return ''
     else:
-	newfillstr = ''
+	oldStyle = styleAtt.value
+	debug(3, '- prestyle:' + oldStyle)
 
-    styleatt = ele.attributes.getNamedItem('style')
-    if styleatt == None:
-	ele.setAttribute('style', newfillstr)
-	return None
-    else:
-	fill = fill_re.match(styleatt.value)
-	if fill:
-	    newstyle = fill_re.sub(newfillstr, styleatt.value)
-	    styleatt.value = newstyle
-	    return fill.group(1)
-	else:
-	    styleatt.value = newfillstr + styleatt.value
-	    return None
+	currStyle = styleToDict(oldStyle)
+	for (name, value) in newStyle.iteritems():
+	    currStyle[name] = value
 
+	currStyleStr = dictToStyle(currStyle)
+	styleAtt.value = currStyleStr
+	debug(3, '-poststyle:' + currStyleStr)
+
+	return oldStyle
+
+re_needsquotes = re.compile(r"[ ()']")
 def svg_to_png(svg_path, png_path):
     """
     Convert the svg_path file into a png_path file.
     """
 
-    if svg_path.find(' ') > 0: svg_path = '"' + svg_path + '"'
-    if png_path.find(' ') > 0: png_path = '"' + png_path + '"'
+    if re_needsquotes.search(svg_path): svg_path = '"' + svg_path + '"'
+    if re_needsquotes.search(png_path): png_path = '"' + png_path + '"'
+    svg_path.replace('"', '\\"')
+    png_path.replace('"', '\\"')
 
     if options.svgtopng_prog == 'inkscape':
 	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
@@ -118,7 +132,7 @@ def svg_to_png(svg_path, png_path):
 			 '--y-zoom', zoom,
 			 svg_path, png_path])
     cmd = cmd.encode(options.encoding)
-    debug('-svgtopng: ' + cmd)
+    debug(2, '-svgtopng: ' + cmd)
     data = ""
     try:
 	if platform.system() == 'Windows': cmd = '"' + cmd + '"'
@@ -134,17 +148,17 @@ def svg_to_png(svg_path, png_path):
 	print >> sys.stderr, ("%s: svg to png conversion failed (%s).\n"
 			      % (r, options.progname))
 	sys.exit(r)
-    debug('-output:\n' + data)
+    debug(2, '-output:\n' + data)
 
-def make_image(svg, (name, node), dir_path, prefix=''):
+def make_image(svg, (name, node), dir_path, prefix, style):
     if node.tagName == 'g':
 	prev_branch = node.cloneNode(deep=True)
 	for e in node.getElementsByTagName('path'):
-	    fill_style(e, options.color)
+	    fill_style(e, style)
 	for e in node.getElementsByTagName('g'):
-	    fill_style(e, options.color)
+	    fill_style(e, style)
 
-    prev_fill = fill_style(node, options.color)
+    prev_style = fill_style(node, style)
 
     svg_path = os.path.join(dir_path, prefix + name + '.svg')
     png_path = os.path.join(dir_path, prefix + name + '.png')
@@ -160,31 +174,47 @@ def make_image(svg, (name, node), dir_path, prefix=''):
 
     if options.to_png:
 	svg_to_png(svg_path, png_path)
-	os.remove(svg_path)
+	if not options.keep_svg: os.remove(svg_path)
 
     if node.tagName == 'g':
 	parent = node.parentNode
 	parent.replaceChild(prev_branch, node)
     else:
-	fill_style(node, prev_fill)
+	set_style(node, prev_style)
+
+def get_all_paths(svg_ele, getname_func):
+    """
+    Given an svg element node, calls getname_func for all path elements
+    within, returning a double (name, node) for those that match.
+    """
+    for node in svg_ele.getElementsByTagName('path'):
+	if (node.nodeType == node.ELEMENT_NODE
+		and node.tagName == 'path'
+		and node.attributes.has_key('id')):
+	    (name, matched) = (
+		getname_func(node.attributes.getNamedItem('id').value))
+	    if name: yield (name, node, matched)
+    return
 
 def get_group_paths(node, depth, getname_func):
     for n in node.childNodes:
 	if n.nodeType == node.ELEMENT_NODE:
-	    if node.attributes.has_key('id'):
-		name = getname_func(n.attributes.getNamedItem('id').value)
+	    if n.attributes.has_key('id'):
+		(name, matched) = (
+		    getname_func(n.attributes.getNamedItem('id').value))
 	    else:
-		name = ''
+		(name, matched) = ('', False)
 
 	    if (depth > 0) and (n.tagName == 'g'):
-		debug('-' + ('>' * depth) + 'group: "' + name + '"')
+		debug(2, '-' + ('>' * depth) + 'group: "' + name + '"')
 		for gn in get_group_paths(n, depth - 1, getname_func):
 		    yield gn
 	    elif (n.tagName == 'path' or n.tagName == 'g') and (name != ''):
-		yield (name, n)
+		yield (name, n, matched)
 
 def read_names_and_nodes(svg, name_map=None):
-    if not name_map: name_map = {}
+    if not name_map:
+	name_map = {}
 
     if options.skip_groups >= 0:
 	f = lambda s, f: get_group_paths(s, options.skip_groups, f)
@@ -192,11 +222,15 @@ def read_names_and_nodes(svg, name_map=None):
 	f = get_all_paths
 
     namesAndNodes = []
-    for (name, node) in f(svg, get_state):
-	if options.match_csv and not name_map.has_key(name): continue
+    for (name, node, matched) in f(svg, get_state):
+	if not name_map.has_key(name):
+	    if options.match_csv: continue
+	    if not matched and node.attributes.has_key('inkscape:label'):
+		name_map[name] = (
+		    node.attributes.getNamedItem('inkscape:label').value)
 	namesAndNodes.append((name, node))
 
-    return namesAndNodes
+    return (namesAndNodes, name_map)
 
 def make_state_maps(svg, namesAndNodes, dir_path, prefix=''):
     """
@@ -205,8 +239,9 @@ def make_state_maps(svg, namesAndNodes, dir_path, prefix=''):
     not in the map are ignored.
     """
     names = []
+    style = styleToDict(options.style_str)
     for (name, node) in namesAndNodes:
-	make_image(svg, (name, node), dir_path, prefix)
+	make_image(svg, (name, node), dir_path, prefix, style)
 	names.append(name)
 
     return names

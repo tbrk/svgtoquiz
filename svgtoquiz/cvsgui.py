@@ -50,6 +50,7 @@ class ConverterThread (threading.Thread):
 	self.pending = [True for x in range(len(self.namesAndNodes))]
 	self.dir_path = dir_path
 	self.prefix = prefix
+	self.style  = svgmanip.styleToDict(options.style_str)
 
 	self.lock = threading.Lock()
     
@@ -96,7 +97,7 @@ class ConverterThread (threading.Thread):
     def task(self, i):
 	# print "converting: " + str(i) + "..."
 	svgmanip.make_image(self.svg, self.namesAndNodes[i],
-			    self.dir_path, self.prefix)
+			    self.dir_path, self.prefix, self.style)
 
 	self.lock.acquire()
 	self.pending[i] = False
@@ -256,12 +257,8 @@ class Application(Frame):
     def __init__(self, svg, mapdom, name_map={}, master=None):
 	self.tmpdir = tempfile.mkdtemp()
 
-	if name_map:
-	    self.name_map = name_map
-	else:
-	    self.name_map = {}
-
-	namesAndNodes = svgmanip.read_names_and_nodes(svg, name_map)
+	(namesAndNodes, self.name_map) = svgmanip.read_names_and_nodes(svg,
+								       name_map)
 	self.converter = ConverterThread(mapdom, svg, namesAndNodes,
 					 self.tmpdir, '')
 

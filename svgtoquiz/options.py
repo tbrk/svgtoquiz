@@ -27,8 +27,8 @@ from version import __version__
 from optparse import OptionParser
 import locale, platform
 
-def debug(str):
-    if options.debug:
+def debug(priority, str):
+    if priority <= options.debug:
 	print >> sys.stderr, str
 
 class Options:
@@ -56,6 +56,10 @@ class Options:
 		      action='store_true', default=False,
 		      help='randomly shuffle the exported results')
 
+    parser.add_option('--keep-svg', dest='keep_svg',
+		      action='store_true', default=False,
+		      help='keep the intermediate svg files')
+
     parser.add_option('--csv-path', dest='srcpath_csv', metavar='<path>',
 		      help='specify a csv file explicitly')
     parser.add_option('--csv-encoding', dest='csvencoding',
@@ -72,9 +76,14 @@ class Options:
 		      action='store_true', default=False,
 		      help='write the matched ids to stdout')
 
-    parser.add_option('--color', dest='color', default='#ff0000',
+    parser.add_option('--style', dest='style_str',
+		      default='fill: #ff0000',
+		      metavar='<css style>',
+		      help='style to use for path highlighting.')
+
+    parser.add_option('--color', dest='color', default=None,
 		      metavar='<htmlcolor>',
-		      help='color to use for path hilighting.')
+		      help='shortcut for setting the fill style.')
 
     parser.add_option('--no-vice-versa', action='store_false',
 		      dest='create_inverse', default=True,
@@ -91,9 +100,9 @@ class Options:
 		      dest='svgtopng_path', default=None, help=
 	'specify how to convert svg files into png files (rsvg or inkscape)')
 
-    parser.add_option('--debug', action='store_true',
-		      dest='debug', default=False,
-		      help='show debugging trace')
+    parser.add_option('--debug', metavar='<1=least, 5=most>',
+		      dest='debug', default=0,
+		      help='show debugging trace at given level of detail')
 
     parser.add_option('--extract-docs', metavar='<path>',
 		      dest='extract_docs', default=None, help=
@@ -103,18 +112,22 @@ class Options:
 		      dest='skip_groups', default=-1,
 		      help='Respecting groupings at a given depth')
 
+    parser.add_option('--no-overlay', dest='no_overlay',
+		      default=False, action='store_true',
+		      help='Do not use the answerbox overlay feature.')
+
     def setName(self, name):
 	name = re.sub(r'.svg$', '', name)
 	self.name        = name.decode(self.encoding)
-	self.srcpath_svg = name + '.svg'
-	self.srcpath_csv = name + '.csv'
-	self.dstname_xml = name + '.xml'
-	self.q_img       = name + '.png'
-	self.category	 = name.replace('_', ' ')
+	self.srcpath_svg = self.name + '.svg'
+	self.srcpath_csv = self.name + '.csv'
+	self.dstname_xml = self.name + '.xml'
+	self.q_img       = self.name + '.png'
+	self.category	 = self.name.replace('_', ' ')
 
     def setStateRegex(self, regex=None, ignore=None):
 	if regex: self.state_regex = re.compile(regex)
-	else:     self.state_regex = re.compile(r'(.*)')
+	else:     self.state_regex = re.compile(r'.*')
 
 	if ignore: self.ignore_regex = re.compile(ignore)
 	else:	   self.ignore_regex = re.compile(r'^$')
@@ -155,7 +168,7 @@ class Options:
 			    '/usr/local/bin/rsvg']
 
 	if option_path == None:
-	    svgtopng_try = inkscape_try + rsvg_try
+	    svgtopng_try = rsvg_try + inkscape_try
 	else:
 	    if option_path == 'rsvg':
 		svgtopng_try = rsvg_try + inkscape_try
@@ -171,14 +184,16 @@ class Options:
 		if exe.find(' ') > 0:
 		    exe = '"' + exe + '"'
 
-		debug(' '.join(['-testing: ', exe, '--version']))
+		debug(2, ' '.join(['-testing: ', exe, '--version']))
 		
 		proc = subprocess.Popen(' '.join([exe, '--version']),
-					shell=True, stdout=subprocess.PIPE)
+					shell=True,
+					stdout=subprocess.PIPE,
+					stderr=subprocess.STDOUT)
 		pipe = proc.stdout
-		debug('-done. now reading...')
+		debug(2, '-done. now reading...')
 		version = pipe.read()
-		debug('-' + version.strip())
+		debug(1, '-' + version.strip())
 		pipe.close()
 		r = proc.wait()
 		if r != 0: raise None
@@ -189,6 +204,9 @@ class Options:
 	    print >> sys.stderr, (
 		'%s: cannot find a suitable svgtopng program (inkscape or rsvg)'
 		% self.progname)
+	    print >> sys.stderr, (
+		'%s: please specify a path manually with --svgtopng=<path>'
+		% self.progname)
 	    sys.exit(1)
 
 	self.svgtopng_prog = self.getSvgToPngProg(exe)
@@ -198,7 +216,7 @@ class Options:
 	(options, args) = self.parser.parse_args(arguments)
 
 	self.debug	    = options.debug
-	debug('-svgtoquiz ' + __version__)
+	debug(1, '-svgtoquiz ' + __version__)
 
 	if args: self.setName(args[0])
 	elif options.extract_docs != None:
@@ -230,14 +248,20 @@ class Options:
 
 	if options.extract_docs == None:
 	    self.setSvgToPng(options.svgtopng_path)
-
+	
 	self.zoom	    = options.zoom
 	self.random_order   = options.random_order
 	self.show_names     = options.show_names
 	self.create_normal  = options.create_normal
 	self.create_inverse = (options.create_inverse or
 			       not options.create_normal)
-	self.color	    = options.color
+	self.keep_svg	    = options.keep_svg
+	self.overlay	    = not options.no_overlay
+
+	self.style_str	    = options.style_str
+	if (options.color != None):
+	    self.style_str   = 'fill: ' + options.color
+
 	self.match_csv	    = options.match_csv
 	self.run_csvgui	    = options.run_csvgui
 
@@ -271,7 +295,7 @@ class Options:
 	self.progname = progname
 
 	self.name = None
-	self.debug = False
+	self.debug = 0
 
 	self.setDstPath('maps')
 	self.to_png         = True
@@ -280,8 +304,9 @@ class Options:
 	self.show_names     = False
 	self.create_inverse = True
 	self.match_csv	    = False
-	self.color	    = '#ff0000'
+	self.style_str	    = 'fill: #ff0000'
 	self.skip_groups    = -1
+	self.overlay	    = True
 	
 options = Options(os.path.basename(sys.argv[0]))
 

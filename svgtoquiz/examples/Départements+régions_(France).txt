@@ -1,0 +1,63 @@
+$Id$
+
+The source image can be downloaded from:
+    http://commons.wikimedia.org/wiki/Image:Départements%2Brégions_(France).svg
+    (This file is in the Public Domain)
+
+The individual images and export file were automatically generated using a
+script: http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html
+
+The Wikimedia Commons original has been edited to complete the
+inkscape:label attributes, which are used instead of a separate csv file. A
+csv file can be extracted from the svg source, if required, using xquery, e.g.
+    xqilla -i Départements+régions_\(France\).svg inkscapeids.xql  \
+	| grep -v layer | sort > Départements+régions_\(France\).csv
+
+Several layers were removed using XSLT:
+    xsltproc --stringparam layers 'layer4|layer8|layer11|layer13' \
+	     removelayers.xsl Départements+régions_\(France\).svg > output.svg
+    mv output.svg Départements+régions_\(France\).svg
+This can also be done manually in Inkscape.
+
+To create the 'Regions of France' cards:
+    svgtoquiz --name=France-Regions --category='France: Regions' --randomize  \
+	      --zoom=0.9 --id-regex='^FR' --not-id-regex='FRA8gros' \
+	      --no-prefix --style='fill: #ff0000; fill-opacity: .7' \
+	      Départements+régions_\(France\)
+
+Then import form: ~/.mnemosyne/maps/France-Regions/France-Regions.xml
+
+To create the 'Departments of France' cards:
+    svgtoquiz --name=France-Departments --category='France: Departments' \
+	      --no-prefix --randomize  --zoom=0.9 \
+	      --id-regex='departement' \
+	      --not-id-regex='departement(93|75|92|94)$' \
+	      --style='fill: #ff0000' \
+	      Départements+régions_\(France\)
+
+Then import form: ~/.mnemosyne/maps/France-Departments/France-Departments.xml
+
+The png files produced by inkscape or rsvg can be reduced in size by
+converting them from rgb to indexed format with ImageMagick:
+    for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
+This reduces the uncompressed size of the Regions from 2.8M to 1.0M, and
+Departments from 11M to 4.3M. There is no difference in the displayed
+images.
+
+These images support a proposed feature of mnemosyne whereby the answer
+image replaces the question image rather than appearing below it. They are
+thus larger than they would be otherwise.
+
+NB: These maps just consider Metropolitan France and Corsica, i.e. not
+    including Guyane, Guadeloupe, Martinique, or Réunion.
+
+    Names are in French. Some of the French regions have different names in
+    English:
+	Bourgogne (Burgundy)
+	Bretagne (Brittany)
+	Basse-Normandie (Lower Normandy)
+	Haute-Normandie (Upper Normandy)
+	Picardie (Picardy)
+
+Please report other errors, omissions, or suggestions to timbob@bigpond.com.
+

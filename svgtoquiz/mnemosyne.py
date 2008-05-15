@@ -61,13 +61,9 @@ class MnemosyneItem:
 
 	#for (a, v) in self.defatts.iteritems():
 	#    e.setAttribute(a, v)
-	e.appendChild(dom.createTextNode('\n'))
 	e.appendChild(makeTextNode(dom, 'cat', self.cat))
-	e.appendChild(dom.createTextNode('\n'))
 	e.appendChild(makeTextNode(dom, 'Q', self.q))
-	e.appendChild(dom.createTextNode('\n'))
 	e.appendChild(makeTextNode(dom, 'A', self.a))
-	e.appendChild(dom.createTextNode('\n'))
 
 	return e
 
@@ -90,9 +86,7 @@ class MnemosyneExport:
     def __catToElement__(self, dom, cat):
 	e = dom.createElement('category')
 	e.setAttribute('active', '1')
-	e.appendChild(dom.createTextNode('\n'))
 	e.appendChild(makeTextNode(dom, 'name', cat))
-	e.appendChild(dom.createTextNode('\n'))
 	return e
 
     def addItem(self, q, a, cat, invq=None, inva=None, addinv=False):
@@ -122,18 +116,15 @@ class MnemosyneExport:
 	m = x.createElement('mnemosyne')
 	m.setAttribute('core_version', '1')
 	x.appendChild(m)
-	m.appendChild(x.createTextNode('\n'))
 
 	for cat in self.cats:
 	    m.appendChild(self.__catToElement__(x, cat))
-	    m.appendChild(x.createTextNode('\n'))
 	
 	if options.random_order:
 	    random.shuffle(self.items)
 	
 	for item in self.items:
 	    m.appendChild(item.toElement(x))
-	    m.appendChild(x.createTextNode('\n'))
 	
 	return x
 
@@ -159,6 +150,11 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
     else:
 	qimg = ''
 
+    if options.overlay:
+	cardstyle = '<card style="answerbox: overlay"/>'
+    else:
+	cardstyle = ''
+
     for n in names:
 	if name_map:
 	    if name_map.has_key(n):
@@ -173,7 +169,7 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
 	n_path = n_path.replace('\\', '/')
 
-	q = '<b>%s?</b>\n%s' % (fullname, qimg)
+	q = '<b>%s?</b>\n%s%s' % (fullname, qimg, cardstyle)
 	a = '<b>%s</b>\n<img src="%s">' % (fullname, n_path)
 	if options.create_inverse:
 	    qinv = '<img src="%s">' % n_path
