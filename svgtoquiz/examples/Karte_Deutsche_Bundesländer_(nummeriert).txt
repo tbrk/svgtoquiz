@@ -1,0 +1,45 @@
+$Id$
+
+The source image can be downloaded from:
+    http://commons.wikimedia.org/wiki/Image:Karte_Deutsche_Bundesländer_(nummeriert).svg
+    (This file is licensed under Creative Commons Attribution ShareAlike 2.0
+     Germany License)
+
+The individual images and export file were automatically generated using a
+script: http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html
+
+The numbers in the original map were removed in Inkscape.
+
+The background colour was changed by running:
+    sed 's/fill="#b1d1a3"/fill="#fdf9d2"/' \
+	Karte_Deutsche_Bundesländer_(nummeriert).svg \
+	> output.svg
+
+To create the 'Germany: States' cards, a csv file was first created by
+running and manually editing the names:
+    svgtoquiz --gui-csv-edit --zoom=.5 \
+	      Karte_Deutsche_Bundesländer_(nummeriert).svg
+
+Then svgtoquiz was run again to create the card set:
+    svgtoquiz --name=Germany-States \
+	      --category='Germany: States' \
+	      --zoom=.7 Karte_Deutsche_Bundesländer_(nummeriert).svg
+
+These commands must be run in a unicode compatible terminal. If rsvg has a
+problem with the unicode filenames, try inkscape: --svgtopng=inkscape
+
+Then import form:
+    ~/.mnemosyne/maps/Germany-States/Germany-States.xml
+
+The png files were reduced in size by converting them to indexed format:
+    for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
+
+The card set zip file was created by running:
+    (cd $HOME/.mnemosyne && \
+     find maps/Germany-States -type f \
+	| zip $OLDPWD/Germany-States -@)
+
+NB: Names are in German but English names are given in brackets.
+
+Please report other errors, omissions, or suggestions to timbob@bigpond.com.
+

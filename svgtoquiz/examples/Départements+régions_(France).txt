@@ -21,15 +21,15 @@ This can also be done manually in Inkscape.
 
 To create the 'Regions of France' cards:
     svgtoquiz --name=France-Regions --category='France: Regions' --randomize  \
-	      --zoom=0.9 --id-regex='^FR' --not-id-regex='FRA8gros' \
-	      --no-prefix --style='fill: #ff0000; fill-opacity: .7' \
+	      --zoom=0.85 --id-regex='^FR' --not-id-regex='FRA8gros' \
+	      --style='fill: #ff0000; fill-opacity: .7' \
 	      Départements+régions_\(France\)
 
 Then import form: ~/.mnemosyne/maps/France-Regions/France-Regions.xml
 
 To create the 'Departments of France' cards:
     svgtoquiz --name=France-Departments --category='France: Departments' \
-	      --no-prefix --randomize  --zoom=0.9 \
+	      --randomize  --zoom=0.85 \
 	      --id-regex='departement' \
 	      --not-id-regex='departement(93|75|92|94)$' \
 	      --style='fill: #ff0000' \
@@ -44,12 +44,18 @@ This reduces the uncompressed size of the Regions from 2.8M to 1.0M, and
 Departments from 11M to 4.3M. There is no difference in the displayed
 images.
 
+The card set zip files are created by running:
+    (cd $HOME/.mnemosyne && \
+     find maps/France-Regions -type f | zip $OLDPWD/France-Regions -@)
+    (cd $HOME/.mnemosyne && \
+     find maps/France-Departments -type f | zip $OLDPWD/France-Departments -@)
+
 These images support a proposed feature of mnemosyne whereby the answer
 image replaces the question image rather than appearing below it. They are
 thus larger than they would be otherwise.
 
-NB: These maps just consider Metropolitan France and Corsica, i.e. not
-    including Guyane, Guadeloupe, Martinique, or Réunion.
+NB: These maps only consider Metropolitan France and Corsica, i.e. they do
+    not including Guyane, Guadeloupe, Martinique, or Réunion.
 
     Names are in French. Some of the French regions have different names in
     English:

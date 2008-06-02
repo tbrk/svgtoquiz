@@ -1,0 +1,45 @@
+$Id$
+
+The source image can be downloaded from:
+    http://commons.wikimedia.org/wiki/Image:Provinces_of_the_Netherlands.svg
+    (This image is (in part or entirely) based on geographical data from
+     Statistics Netherlands (Centraal Bureau voor de Statistiek). It was
+     created by Mtcv)
+
+The individual images and export file were automatically generated using a
+script: http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html
+
+The Wikimedia Commons original was edited to group paths by province and to
+update the ids and labels with Dutch province names.
+
+The background colour was changed by running:
+    sed 's/fill:#ffd6c0/fill:#fdf9d2/' Provinces_of_the_Netherlands.svg \
+	> output.svg
+
+To create the 'Netherlands: Provinces' cards:
+    svgtoquiz --name=Netherlands-Provinces \
+	      --category='Netherlands: Provinces' \
+	      --group=0 --zoom=2 Provinces_of_the_Netherlands.svg
+
+These cards use a newer feature of svgtoquiz that respects the group
+hierarchy (--group=0) in svg files.
+
+Then import form:
+    ~/.mnemosyne/maps/Netherlands-Provinces/Netherlands-Provinces.xml
+
+The png files were reduced in size by converting them to indexed format:
+    for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
+
+The card set zip file was created by running:
+    (cd $HOME/.mnemosyne && \
+     find maps/Netherlands-Provinces -type f \
+	| zip $OLDPWD/Netherlands-Provinces -@)
+
+NB: Names are in Dutch. Some of the provinces have different names in English:
+	Noord-Holland	    North Holland
+	Zuid-Holland	    South Holland
+	Noord-Brabant	    North Brabant
+	Zeeland		    Zealand
+
+Please report other errors, omissions, or suggestions to timbob@bigpond.com.
+

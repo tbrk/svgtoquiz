@@ -2,6 +2,7 @@
 <!-- Remove layers from an inkscape svg file, e.g.:
 	xsltproc - -stringparam layers 'layer4|layer8|layer11|layer13' \
 		 removelayers.xsl input.xml
+     (the space between the first two hyphens must be removed)
 -->
 <xsl:stylesheet version="1.0"
 		xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
