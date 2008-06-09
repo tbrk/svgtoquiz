@@ -1,4 +1,4 @@
-svgtoquiz-1.5.0	    20080609
+svgtoquiz-1.4.1	    20080609
     * id-regex and not-id-regex now match anywhere in an id.
       (use re.search instead of re.match)
     * Default to no prefixes (use --prefix option for previous behaviour)
