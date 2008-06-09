@@ -20,8 +20,8 @@ The Human_skeleton_front.svg file was created by running:
 	egrep -v "(layer|Right)" | sort > Human_skeleton_front.csv
 
 To create the 'Human skeleton: from front' cards:
-    svgtoquiz --name=Human_skeleton-from_front \
-	      --category="Human skeleton: from front" \
+    svgtoquiz --name=skeleton-human_front \
+	      --category="Skeleton: human front" \
 	      --not-id-regex="^(path|g[0-9])" --match-csv \
 	      --enter-group="layer3|FootLeft|HandLeft|Skull" \
 	      --zoom=.7 Human_skeleton_front.svg
@@ -31,15 +31,15 @@ some groups and not others to be specified with regular expressions. It is
 less coarse than the --groups=<num> option.
 
 Then import form:
-    ~/.mnemosyne/maps/Human_skeleton-from_front/Human_skeleton-from_front.xml
+    ~/.mnemosyne/maps/skeleton-human_front/skeleton-human_front.xml
 
 The png files were reduced in size by converting them to indexed format:
     for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
 
 The card set zip file was created by running:
     (cd $HOME/.mnemosyne && \
-     find maps/Human_skeleton-from_front -type f \
-	| zip $OLDPWD/Human_skeleton-from_front -@)
+     find maps/skeleton-human_front -type f \
+	| zip $OLDPWD/skeleton-human_front -@)
 
 Please report errors, omissions, or suggestions to timbob@bigpond.com.
 
