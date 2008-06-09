@@ -1,0 +1,45 @@
+$Id$
+
+The source image can be downloaded from:
+    http://commons.wikimedia.org/wiki/Image:Human_skeleton_front.svg
+    (TODO: add license/credits)
+
+The individual images and export file were automatically generated using a
+script: http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html
+
+The Wikimedia Commons original was edited to restructure the layers and
+groups, and to add ids and labels for the named bones.
+
+The labels and background were removed by running:
+    xsltproc --novalid --stringparam layers 'layer1|layer4' \
+	removelayers.xsl Human_skeleton_front.svg \
+	> outputs.svg
+
+The Human_skeleton_front.svg file was created by running:
+    xqilla -i Human_skeleton_front.svg inkscapeids.xql | \
+	egrep -v "(layer|Right)" | sort > Human_skeleton_front.csv
+
+To create the 'Human skeleton: from front' cards:
+    svgtoquiz --name=Human_skeleton-from_front \
+	      --category="Human skeleton: from front" \
+	      --not-id-regex="^(path|g[0-9])" --match-csv \
+	      --enter-group="layer3|FootLeft|HandLeft|Skull" \
+	      --zoom=.7 Human_skeleton_front.svg
+
+These cards use a new feature of svgtoquiz 1.5.0 that allows descent through
+some groups and not others to be specified with regular expressions. It is
+less coarse than the --groups=<num> option.
+
+Then import form:
+    ~/.mnemosyne/maps/Human_skeleton-from_front/Human_skeleton-from_front.xml
+
+The png files were reduced in size by converting them to indexed format:
+    for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
+
+The card set zip file was created by running:
+    (cd $HOME/.mnemosyne && \
+     find maps/Human_skeleton-from_front -type f \
+	| zip $OLDPWD/Human_skeleton-from_front -@)
+
+Please report errors, omissions, or suggestions to timbob@bigpond.com.
+

@@ -1,3 +1,4 @@
+(: xqilla -i <inputfile> inkscapeids.xql :)
 declare namespace inkscape="http://www.inkscape.org/namespaces/inkscape";
 declare namespace svg="http://www.w3.org/2000/svg";
 

@@ -92,9 +92,9 @@ class Options:
 		      dest='create_normal', default=True,
 		      help='only produce vice-versa entries')
 
-    parser.add_option('--no-prefix', action='store_false',
-		      dest='prefix_names', default=True,
-		      help='do not add a prefix to filenames')
+    parser.add_option('--prefix', action='store_true',
+		      dest='prefix_names', default=False,
+		      help='add a prefix to image filenames')
 
     parser.add_option('--svgtopng', metavar='<[path/]rsvg|[path/]inkscape>',
 		      dest='svgtopng_path', default=None, help=
@@ -110,7 +110,14 @@ class Options:
 
     parser.add_option('-g', '--groups', metavar='<levels-to-skip>',
 		      dest='skip_groups', default=-1,
-		      help='Respecting groupings at a given depth')
+	      help='Treat groups shallower than the depth as transparent.')
+
+    parser.add_option('--enter-group', dest='group_enter', metavar='<regex>',
+      help='Treat groups with matching ids (after id_regex) as transparent.')
+
+    parser.add_option('--not-enter-group', dest='group_noenter',
+		      metavar='<regex>',
+      help='Treat groups with matching id selections as opaque with priority.')
 
     parser.add_option('--no-overlay', dest='no_overlay',
 		      default=False, action='store_true',
@@ -124,6 +131,15 @@ class Options:
 	self.dstname_xml = self.name + '.xml'
 	self.q_img       = self.name + '.png'
 	self.category	 = self.name.replace('_', ' ')
+
+    def setGroupRegex(self, regex=None, ignore=None):
+	if regex: self.transparent_regex = re.compile(regex)
+	else:     self.transparent_regex = re.compile(r'^$')
+
+	if ignore: self.opaque_regex = re.compile(ignore)
+	else:	   self.opaque_regex = re.compile(r'^$')
+
+	return (regex or ignore)
 
     def setStateRegex(self, regex=None, ignore=None):
 	if regex: self.state_regex = re.compile(regex)
@@ -215,7 +231,7 @@ class Options:
     def parseArguments(self, arguments):
 	(options, args) = self.parser.parse_args(arguments)
 
-	self.debug	    = options.debug
+	self.debug	    = int(options.debug)
 	debug(1, '-svgtoquiz ' + __version__)
 
 	if args: self.setName(args[0])
@@ -271,6 +287,9 @@ class Options:
 				  % self.progname)
 	    sys.exit(1)
 
+	if self.setGroupRegex(options.group_enter, options.group_noenter):
+	    self.skip_groups = max(0, self.skip_groups)
+
 	self.extract_docs   = options.extract_docs
 
 	if options.prefix_names: self.prefix = self.name + '_'
@@ -292,6 +311,7 @@ class Options:
 	self.csvencoding = self.encoding
 
 	self.setStateRegex()
+	self.setGroupRegex()
 	self.progname = progname
 
 	self.name = None

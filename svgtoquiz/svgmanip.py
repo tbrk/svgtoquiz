@@ -66,8 +66,8 @@ def get_state(name):
     if name matches the state regular expression, returns the state
     abbreviation, otherwise returns an empty string.
     """
-    m = options.state_regex.match(name)
-    i = options.ignore_regex.match(name)
+    m = options.state_regex.search(name)
+    i = options.ignore_regex.search(name)
     if m and not i:
 	try:
 	    subname = m.group(1)
@@ -94,7 +94,7 @@ def fill_style(ele, newStyle = {}):
 	return ''
     else:
 	oldStyle = styleAtt.value
-	debug(3, '- prestyle:' + oldStyle)
+	debug(6, '-prestyle :' + oldStyle)
 
 	currStyle = styleToDict(oldStyle)
 	for (name, value) in newStyle.iteritems():
@@ -102,7 +102,7 @@ def fill_style(ele, newStyle = {}):
 
 	currStyleStr = dictToStyle(currStyle)
 	styleAtt.value = currStyleStr
-	debug(3, '-poststyle:' + currStyleStr)
+	debug(6, '-poststyle:' + currStyleStr)
 
 	return oldStyle
 
@@ -188,24 +188,31 @@ def get_all_paths(svg_ele, getname_func):
     within, returning a double (name, node) for those that match.
     """
     for node in svg_ele.getElementsByTagName('path'):
-	if (node.nodeType == node.ELEMENT_NODE
-		and node.tagName == 'path'
-		and node.attributes.has_key('id')):
-	    (name, matched) = (
-		getname_func(node.attributes.getNamedItem('id').value))
-	    if name: yield (name, node, matched)
+	if node.nodeType == node.ELEMENT_NODE:
+	    if node.attributes.has_key('id'):
+		id = node.attributes.getNamedItem('id').value
+		debug(5, '-element: ' + node.tagName + ', id=' + id)
+		if node.tagName == 'path':
+		    (name, matched) = getname_func(id)
+		    if name: yield (name, node, matched)
+	    else:
+		debug(5, '-element: ' + node.tagName)
     return
 
 def get_group_paths(node, depth, getname_func):
     for n in node.childNodes:
 	if n.nodeType == node.ELEMENT_NODE:
 	    if n.attributes.has_key('id'):
-		(name, matched) = (
-		    getname_func(n.attributes.getNamedItem('id').value))
+		id = n.attributes.getNamedItem('id').value
+		debug(5, '-element: ' + n.tagName + ', id=' + id)
+		(name, matched) = getname_func(id)
 	    else:
+		debug(5, '-element: ' + n.tagName)
 		(name, matched) = ('', False)
 
-	    if (depth > 0) and (n.tagName == 'g'):
+	    if ((n.tagName == 'g') and
+		    (depth > 0 or options.transparent_regex.search(name))
+		    and not options.opaque_regex.match(name)):
 		debug(2, '-' + ('>' * depth) + 'group: "' + name + '"')
 		for gn in get_group_paths(n, depth - 1, getname_func):
 		    yield gn

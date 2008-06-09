@@ -1,4 +1,15 @@
-svgtoquiz-1.4.0	    20070515
+svgtoquiz-1.5.0	    20080609
+    * id-regex and not-id-regex now match anywhere in an id.
+      (use re.search instead of re.match)
+    * Default to no prefixes (use --prefix option for previous behaviour)
+    * Added enter-group and not-enter-group options for finer grain
+      control over group processing.
+    * Added new examples:
+	Karte_Deutsche_Bundesländer_(nummeriert)
+	Provinces_of_the_Netherlands
+	Human_skeleton_front
+
+svgtoquiz-1.4.0	    20080515
     * Do not require grouping in --id-regex (just matching now works).
     * Fix a bug in handling style attributes with multiple entries.
     * Implement varying levels of debugging detail.
@@ -11,7 +22,7 @@ svgtoquiz-1.4.0	    20070515
     * Add support for proposed answerbox overlay feature.
     * Add the France Region and Department example.
 
-svgtoquiz-1.3.0	    20070427
+svgtoquiz-1.3.0	    20080427
     * Support for groupings (--groups=<levels-to-skip>)
     * Better modularisation.
     * Respect the current locale.
@@ -29,17 +40,17 @@ svgtoquiz-1.3.0	    20070427
     * Fix code for Serbia in examples/Blank_map_of_Europe.svg
       (thanks to Tobias Hall)
 
-svgtoquiz-1.2.3	    20070403
+svgtoquiz-1.2.3	    20080403
     * Separate gui features into a separate file to reduce the number of
       dependencies required to use basic features.
     * Handle unicode categories.
     * Minor bug fixes.
 
-svgtoquiz-1.2.0	    20070403
+svgtoquiz-1.2.0	    20080403
     * New --gui-csv-edit feature for creating csv files.
     * Fixed several unicode bugs.
     * Many thanks to Patrick Kenny for testing and feedback.
 
-svgtoquiz-1.0.0	    20070326
+svgtoquiz-1.0.0	    20080326
     * First version released.
 

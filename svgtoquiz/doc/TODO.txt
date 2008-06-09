@@ -2,4 +2,6 @@
 * Improve i18n: use gettext to allow translations
 * Add unit and regression testing.
 * Add support for a config file.
+* Add a mode for adding/updating inkscape:label attributes from a CSV file.
+* Improve the gui mode.
 
