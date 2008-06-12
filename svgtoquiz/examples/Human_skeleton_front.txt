@@ -2,7 +2,11 @@ $Id$
 
 The source image can be downloaded from:
     http://commons.wikimedia.org/wiki/Image:Human_skeleton_front.svg
-    (TODO: add license/credits)
+    (This image has been released into the public domain by its author,
+     LadyofHats. This applies worldwide.
+     In some countries this may not be legally possible; if so:
+     LadyofHats grants anyone the right to use this work for any purpose,
+     without any conditions, unless such conditions are required by law.)
 
 The individual images and export file were automatically generated using a
 script: http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html
@@ -20,26 +24,30 @@ The Human_skeleton_front.svg file was created by running:
 	egrep -v "(layer|Right)" | sort > Human_skeleton_front.csv
 
 To create the 'Human skeleton: from front' cards:
-    svgtoquiz --name=skeleton-human_front \
-	      --category="Skeleton: human front" \
-	      --not-id-regex="^(path|g[0-9])" --match-csv \
+    svgtoquiz --name=Skeleton-Human_front \
+	      --category="Skeleton: Human front" \
+	      --match-csv --csv-path=Human_skeleton_front.csv \
 	      --enter-group="layer3|FootLeft|HandLeft|Skull" \
-	      --zoom=.7 Human_skeleton_front.svg
+	      --zoom=.5 outputs.svg
 
 These cards use a new feature of svgtoquiz 1.5.0 that allows descent through
 some groups and not others to be specified with regular expressions. It is
 less coarse than the --groups=<num> option.
 
+The image is quite long and thus use requires either at least 800 vertical
+pixesls or the answer overlay patch (available from the author, but
+submitted for inclusion in mnemosyne).
+
 Then import form:
-    ~/.mnemosyne/maps/skeleton-human_front/skeleton-human_front.xml
+    ~/.mnemosyne/maps/Skeleton-Human_front/Skeleton-Human_front.xml
 
 The png files were reduced in size by converting them to indexed format:
     for f in *.png; do convert -colors 256 $f $f.png && mv $f.png $f; done
 
 The card set zip file was created by running:
     (cd $HOME/.mnemosyne && \
-     find maps/skeleton-human_front -type f \
-	| zip $OLDPWD/skeleton-human_front -@)
+     find maps/Skeleton-Human_front -type f \
+	| zip $OLDPWD/Skeleton-Human_front -@)
 
 Please report errors, omissions, or suggestions to timbob@bigpond.com.
 
