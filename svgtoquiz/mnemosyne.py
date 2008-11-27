@@ -14,213 +14,97 @@
 # License for more details.
 #
 
-import os, os.path, random, sys
 import xml.dom.minidom
 from options import options
+from export import ExportFile
 
-def makeTextNode(dom, tagName, text):
+class MnemosyneFile(ExportFile):
     """
-    Given an xml dom object, create a tagName element containing text.
+    Export plugin for Mnemosyne.
     """
-    c = dom.createElement(tagName)
-    c.appendChild(dom.createTextNode(text))
-    return c
 
-class MnemosyneItem:
-    """
-    An item suitable for including in a Mnemosyne export file.
-    """
-    defatts = { 'gr'      : '0',
-		'e'       : '2.594',
-		'ac_rp'   : '1',
-		'rt_rp'   : '0',
-		'lps'     : '0',
-		'ac_rp_l' : '1',
-		'rt_rp_l' : '0',
-		'l_rp'    : '36',
-		'n_rp'    : '36'     }
-
-    def __init__(self, id, q, a, cat):
+    def makeTextNode(tagName, text):
 	"""
-	Given strings for an id, question, answer and category, create an
-	item object.
+	Given an xml dom object, create a tagName element containing text.
 	"""
-	self.id = id
-	self.q = q
-	self.a = a
-	self.cat = cat
+	c = self.dom.createElement(tagName)
+	c.appendChild(self.dom.createTextNode(text))
+	return c
 
-    def toElement(self, dom):
+    def __init__(self, category):
+	"""
+	Initialize an export file with a category name.
+	"""
+	export.ExportFile.__init__(self, category)
+
+	self.dom = xml.dom.minidom.Document()
+	m = self.dom.createElement('mnemosyne')
+
+	m.setAttribute('core_version', '1')
+	self.dom.appendChild(m)
+	self.mnemosyne = m
+
+	c = self.dom.createElement('category')
+	c.setAttribute('active', '1')
+	c.appendChild(self.makeTextNode('name', category))
+	m.appendChild(c)
+
+    def addXMLItem(self, id, q, a):
 	"""
 	Given an xml dom object, return an xml element representing the
 	item.
 	"""
-	e = dom.createElement('item')
-	e.setAttribute('id', self.id)
+	e = self.dom.createElement('item')
+	e.setAttribute('id', id)
 	e.setIdAttribute('id')
 
-	#for (a, v) in self.defatts.iteritems():
-	#    e.setAttribute(a, v)
-	e.appendChild(makeTextNode(dom, 'cat', self.cat))
-	e.appendChild(makeTextNode(dom, 'Q', self.q))
-	e.appendChild(makeTextNode(dom, 'A', self.a))
+	e.appendChild(self.makeTextNode('cat', self.cat))
+	e.appendChild(self.makeTextNode('Q', q))
+	e.appendChild(self.makeTextNode('A', a))
 
-	return e
+	self.mnemosyne.appendChild(e)
 
-class MnemosyneExport:
-    """
-    An xml file in Mnemosyne export format.
-    """
-    def __init__(self):
-	self.nextid = -1
-	self.cats = {}
-	self.items = []
-
-    def nextId(self):
-	"""
-	Return an id that is unique for the object.
-	"""
-	self.nextid += 1
-	return str(self.nextid)
-
-    def __catToElement__(self, dom, cat):
-	e = dom.createElement('category')
-	e.setAttribute('active', '1')
-	e.appendChild(makeTextNode(dom, 'name', cat))
-	return e
-
-    def addItem(self, q, a, cat, invq=None, inva=None, addinv=False):
+    def addItem(self, objname, blank, highlighted, addnormal, addinverse):
 	"""
 	Add an item to the export file.
 
-	Question, answer, and category strings must be supplied.
-
-	An inverse item is also added if invq and inva are given, or if
-	addinv is true.
+	objname:	The name of the quiz object being highlighted,
+			for use as a question or answer.
+			e.g. 'California'
+	blank:		The path to the quiz image with nothing highlighted.
+			e.g. a plain map of the USA.
+	highlighted:	The path to the quiz image with objname highlighted.
+			e.g. the USA map with a single state in red.
+	addnormal:	add a normal card, i.e, show the highlighted image
+		    	in the answer.
+	addinverse:	add an inverse card, i.e. show the highlighted
+			image in the question.
 	"""
-	id = self.nextId()
-	self.cats[cat] = True
-	self.items.append(MnemosyneItem(id, q, a, cat))
 
-	if (invq != None and inva != None):
-	    self.items.append(MnemosyneItem(id + '.inv', invq, inva, cat))
-	elif addinv:
-	    self.items.append(MnemosyneItem(id + '.inv', a, q, cat))
-
-
-    def toXmlDom(self):
-	"""
-	Returns an xml dom for the export file.
-	"""
-	x = xml.dom.minidom.Document()
-	m = x.createElement('mnemosyne')
-	m.setAttribute('core_version', '1')
-	x.appendChild(m)
-
-	for cat in self.cats:
-	    m.appendChild(self.__catToElement__(x, cat))
-	
-	if options.random_order:
-	    random.shuffle(self.items)
-	
-	for item in self.items:
-	    m.appendChild(item.toElement(x))
-	
-	return x
-
-def make_questions(names, name_map=None, cat='Map', qimgfile=None):
-    """
-    Turns the list of names into a set of questions and answers.
-    The questions and answers are taken via name_map if it is given.
-    qimgfile is the name of an image file to include with each question.
-    A category can be specified by category.
-    """
-    e = MnemosyneExport()
-
-    if qimgfile:
-	qpath = os.path.join(options.exportpath, qimgfile)
-	qpath = qpath.replace('\\', '/')
-
-	if os.path.isabs(qpath) or qpath.startswith('./'):
-	    print >> sys.stderr, (
-		"%s: warning: the image path '%s' may be unsuitable for sharing"
-		% (options.progname, qpath))
-
-	qimg = '<img src="%s">' % qpath
-    else:
-	qimg = ''
-
-    if options.overlay:
-	cardstyle = '<card style="answerbox: overlay"/>'
-    else:
-	cardstyle = ''
-
-    for n in names:
-	if name_map:
-	    if name_map.has_key(n):
-		fullname = name_map[n]
-	    elif name_map.has_key(n.upper()):
-		fullname = name_map[n.upper()]
-	    elif name_map.has_key(n.lower()):
-		fullname = name_map[n.lower()]
-	    else: fullname = n.replace('_', ' ')
-	else: fullname = n.replace('_', ' ')
-
-	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
-	n_path = n_path.replace('\\', '/')
-
-	q = '<b>%s?</b>\n%s%s' % (fullname, qimg, cardstyle)
-	a = '<b>%s</b>\n<img src="%s">' % (fullname, n_path)
-	if options.create_inverse:
-	    qinv = '<img src="%s">' % n_path
-	    ainv = '<b>' + fullname + '</b>'
-	else: (qinv, ainv) = (None, None)
-
-	if options.create_normal:
-	    e.addItem(q, a, cat, qinv, ainv)
+	if options.overlay:
+	    cardstyle = '<card style="answerbox: overlay"/>'
 	else:
-	    e.addItem(qinv, ainv, cat)
+	    cardstyle = ''
 
-    return e
+	id = self.nextId()
+	idinv = inv + '.inv'
 
-def make_multiple_choice(names, name_map=None, cat='Multiple', qimgfile=None):
-    """
-    Turns the entries of name_map into a set of multiple choice cards.
-    Entries which do not map to an image in names are ignored.
-    qimgfile is the name of an image file to include with each question.
-    A category can be specified by category.
-    """
+	if addnormal:
+	    q = '<b>%s?</b>\n%s%s' % (objname, blank, cardstyle)
+	    a = '<b>%s</b>\n<img src="%s">' % (objname, highlighted)
+	    self.addXMLItem(id, q, a)
 
-    e = MnemosyneExport()
+	if addinverse:
+	    qinv = '<img src="%s">' % highlighted
+	    ainv = '<b>' + objname + '</b>'
+	    self.addXMLItem(idinv, qinv, ainv)
 
-    if qimgfile:
-	qpath = os.path.join(options.exportpath, qimgfile)
-	qpath = qpath.replace('\\', '/')
-
-	if os.path.isabs(qpath) or qpath.startswith('./'):
-	    print >> sys.stderr, (
-		"%s: warning: the image path '%s' may be unsuitable for sharing"
-		% (options.progname, qpath))
-
-	qimg = '<img src="%s">' % qpath
-    else:
-	qimg = ''
-
-    if options.overlay:
-	cardstyle = '<card style="answerbox: overlay"/>'
-    else:
-	cardstyle = ''
-
-    for (qtext, n) in name_map.iteritems():
-	if n not in names:
-	    continue
-
-	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
-	n_path = n_path.replace('\\', '/')
-
-	q = '<b>%s</b>\n%s%s' % (qtext, qimg, cardstyle)
-	a = '<b>%s</b>\n<img src="%s">' % (qtext, n_path)
-	e.addItem(q, a, cat, None, None)
-	
-    return e
+    def write(self):
+	"""
+	Create a file at path and write all items to it.
+	"""
+	xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
+			  'wb', 'UTF-8')
+	self.dom.writexml(xfp, encoding='UTF-8')
+	xfp.close()
 
