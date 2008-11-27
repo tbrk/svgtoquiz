@@ -123,6 +123,10 @@ class Options:
 		      default=False, action='store_true',
 		      help='Do not use the answerbox overlay feature.')
 
+    parser.add_option('--multiple-choice', dest='multiple_choice',
+		      default=False, action='store_true',
+		      help='Generate multiple choice questions and answers.')
+
     def setName(self, name):
 	name = re.sub(r'.svg$', '', name)
 	self.name        = name.decode(self.encoding)
@@ -291,9 +295,20 @@ class Options:
 	    self.skip_groups = max(0, self.skip_groups)
 
 	self.extract_docs   = options.extract_docs
+	self.multiple_choice = options.multiple_choice
 
 	if options.prefix_names: self.prefix = self.name + '_'
 	else:			 self.prefix = ''
+
+	num_mode = 0
+	if options.multiple_choice: num_mode += 1
+	if options.extract_docs:    num_mode += 1
+	if options.run_csvgui:      num_mode += 1
+
+	if num_mode > 1:
+	    print >> sys.stderr, ("%s: only one mode command may be given.\n"
+				  % self.progname)
+	    sys.exit(1)
 
     def debugPrint(self):
 	variables = [('dstpath',       self.dstpath),
@@ -327,6 +342,7 @@ class Options:
 	self.style_str	    = 'fill: #ff0000'
 	self.skip_groups    = -1
 	self.overlay	    = True
+	self.multiple_choice = False
 	
 options = Options(os.path.basename(sys.argv[0]))
 

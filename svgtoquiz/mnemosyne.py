@@ -183,3 +183,44 @@ def make_questions(names, name_map=None, cat='Map', qimgfile=None):
 
     return e
 
+def make_multiple_choice(names, name_map=None, cat='Multiple', qimgfile=None):
+    """
+    Turns the entries of name_map into a set of multiple choice cards.
+    Entries which do not map to an image in names are ignored.
+    qimgfile is the name of an image file to include with each question.
+    A category can be specified by category.
+    """
+
+    e = MnemosyneExport()
+
+    if qimgfile:
+	qpath = os.path.join(options.exportpath, qimgfile)
+	qpath = qpath.replace('\\', '/')
+
+	if os.path.isabs(qpath) or qpath.startswith('./'):
+	    print >> sys.stderr, (
+		"%s: warning: the image path '%s' may be unsuitable for sharing"
+		% (options.progname, qpath))
+
+	qimg = '<img src="%s">' % qpath
+    else:
+	qimg = ''
+
+    if options.overlay:
+	cardstyle = '<card style="answerbox: overlay"/>'
+    else:
+	cardstyle = ''
+
+    for (qtext, n) in name_map.iteritems():
+	if n not in names:
+	    continue
+
+	n_path = os.path.join(options.exportpath, options.prefix + n + '.png')
+	n_path = n_path.replace('\\', '/')
+
+	q = '<b>%s</b>\n%s%s' % (qtext, qimg, cardstyle)
+	a = '<b>%s</b>\n<img src="%s">' % (qtext, n_path)
+	e.addItem(q, a, cat, None, None)
+	
+    return e
+

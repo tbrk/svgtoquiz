@@ -121,8 +121,15 @@ def main():
     mapdom.unlink()
 
     debug(1, '-making questions')
-    export = mnemosyne.make_questions(names, name_map,
-				      options.category, options.q_img)
+    if options.multiple_choice:
+	if name_map == None:
+	    print >> sys.stderr, 'Option --multiple-choice requires a csv file.'
+	    return 1
+	export = mnemosyne.make_multiple_choice(names, name_map,
+						options.category, options.q_img)
+    else:
+	export = mnemosyne.make_questions(names, name_map,
+					  options.category, options.q_img)
     edom = export.toXmlDom()
     xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
 		      'wb', 'UTF-8')

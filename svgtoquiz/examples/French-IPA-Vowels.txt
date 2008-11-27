@@ -1,0 +1,31 @@
+$Id$
+
+The card contents were originally created by:
+    John Maidment
+    Department of Phonetics and Linguistics
+    University College London
+    http://www.phon.ucl.ac.uk/home/johnm/flash/flashin.htm
+
+Any comments or suggestions regarding the Mnemosyne version should be
+directed to Timothy Bourke <timbob@bigpond.com>.
+
+The questions and answers were converted from the Javascript into
+French-IPA-Vowels.csv. The graphic was recreated in svg format.
+
+The card set was created using the multiple-choice feature of svgtoquiz:
+    svgtoquiz --multiple-choice \
+	      --svgtopng=inkscape --zoom=0.6 --id-regex='box(\d\d)' \
+	      --category='French: IPA Vowels' French-IPA-Vowels.svg
+
+The card set zip file was created by running:
+    (cd $HOME/.mnemosyne && \
+     find maps/French-IPA-Vowels -type f \
+     | zip $OLDPWD/French-IPA-Vowels -@)
+
+Note:
+    An alternative to generating the question and answer table from an svg
+    image would be to create it as an html table. The card set produced
+    would be smaller and more flexible (able to scale to the window size,
+    for instance), but a unicode font with the IPA symbols would be
+    required at the client side.
+

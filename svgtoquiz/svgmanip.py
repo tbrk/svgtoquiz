@@ -58,8 +58,13 @@ def dictToStyle(styleDict):
 
 #----------------------------------------------------------------------
 
-# Groups:
-#   Look under <svg>, only pay attention to <g> and <path> elements.
+svgobj_regex = re.compile(r'(path|rect|circle|ellipse|polygon)')
+
+def allsvgobj_iter(node):
+    for t in ['path', 'rect', 'circle', 'ellipse', 'polygon']:
+	for e in node.getElementsByTagName(t):
+	    yield e
+    return
 
 def get_state(name):
     """
@@ -153,7 +158,7 @@ def svg_to_png(svg_path, png_path):
 def make_image(svg, (name, node), dir_path, prefix, style):
     if node.tagName == 'g':
 	prev_branch = node.cloneNode(deep=True)
-	for e in node.getElementsByTagName('path'):
+	for e in allsvgobj_iter(node):
 	    fill_style(e, style)
 	for e in node.getElementsByTagName('g'):
 	    fill_style(e, style)
@@ -187,12 +192,12 @@ def get_all_paths(svg_ele, getname_func):
     Given an svg element node, calls getname_func for all path elements
     within, returning a double (name, node) for those that match.
     """
-    for node in svg_ele.getElementsByTagName('path'):
+    for node in allsvgobj_iter(svg_ele):
 	if node.nodeType == node.ELEMENT_NODE:
 	    if node.attributes.has_key('id'):
 		id = node.attributes.getNamedItem('id').value
 		debug(5, '-element: ' + node.tagName + ', id=' + id)
-		if node.tagName == 'path':
+		if svgobj_regex.match(node.tagName):
 		    (name, matched) = getname_func(id)
 		    if name: yield (name, node, matched)
 	    else:
@@ -216,7 +221,8 @@ def get_group_paths(node, depth, getname_func):
 		debug(2, '-' + ('>' * depth) + 'group: "' + name + '"')
 		for gn in get_group_paths(n, depth - 1, getname_func):
 		    yield gn
-	    elif (n.tagName == 'path' or n.tagName == 'g') and (name != ''):
+	    elif ((svgobj_regex.match(n.tagName) or n.tagName == 'g')
+		    and (name != '')):
 		yield (name, n, matched)
 
 def read_names_and_nodes(svg, name_map=None):

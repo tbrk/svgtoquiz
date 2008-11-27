@@ -19,7 +19,7 @@ The labels and background were removed by running:
 	removelayers.xsl Human_skeleton_front.svg \
 	> outputs.svg
 
-The Human_skeleton_front.svg file was created by running:
+The Human_skeleton_front.csv file was created by running:
     xqilla -i Human_skeleton_front.svg inkscapeids.xql | \
 	egrep -v "(layer|Right)" | sort > Human_skeleton_front.csv
 
@@ -35,8 +35,8 @@ some groups and not others to be specified with regular expressions. It is
 less coarse than the --groups=<num> option.
 
 The image is quite long and thus use requires either at least 800 vertical
-pixesls or the answer overlay patch (available from the author, but
-submitted for inclusion in mnemosyne).
+pixels or the answer overlay patch (available from the author, but
+submitted for inclusion in Mnemosyne).
 
 Then import form:
     ~/.mnemosyne/maps/Skeleton-Human_front/Skeleton-Human_front.xml
