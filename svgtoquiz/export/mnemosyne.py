@@ -14,16 +14,17 @@
 # License for more details.
 #
 
-import xml.dom.minidom
-from options import options
-from export import ExportFile
+import xml.dom.minidom, os.path, codecs
+from svgtoquiz import register_export_class, ExportFile, options
+
+# TODO: respect options.random_order
 
 class MnemosyneFile(ExportFile):
     """
     Export plugin for Mnemosyne.
     """
 
-    def makeTextNode(tagName, text):
+    def makeTextNode(self, tagName, text):
 	"""
 	Given an xml dom object, create a tagName element containing text.
 	"""
@@ -35,7 +36,7 @@ class MnemosyneFile(ExportFile):
 	"""
 	Initialize an export file with a category name.
 	"""
-	export.ExportFile.__init__(self, category)
+	ExportFile.__init__(self, category)
 
 	self.dom = xml.dom.minidom.Document()
 	m = self.dom.createElement('mnemosyne')
@@ -58,7 +59,7 @@ class MnemosyneFile(ExportFile):
 	e.setAttribute('id', id)
 	e.setIdAttribute('id')
 
-	e.appendChild(self.makeTextNode('cat', self.cat))
+	e.appendChild(self.makeTextNode('cat', self.category))
 	e.appendChild(self.makeTextNode('Q', q))
 	e.appendChild(self.makeTextNode('A', a))
 
@@ -81,16 +82,19 @@ class MnemosyneFile(ExportFile):
 			image in the question.
 	"""
 
+	qimg = ''
+	if blank != None: qimg = '<img src="%s">' % blank
+
 	if options.overlay:
 	    cardstyle = '<card style="answerbox: overlay"/>'
 	else:
 	    cardstyle = ''
 
 	id = self.nextId()
-	idinv = inv + '.inv'
+	idinv = id + '.inv'
 
 	if addnormal:
-	    q = '<b>%s?</b>\n%s%s' % (objname, blank, cardstyle)
+	    q = '<b>%s?</b>\n%s%s' % (objname, qimg, cardstyle)
 	    a = '<b>%s</b>\n<img src="%s">' % (objname, highlighted)
 	    self.addXMLItem(id, q, a)
 
@@ -103,8 +107,10 @@ class MnemosyneFile(ExportFile):
 	"""
 	Create a file at path and write all items to it.
 	"""
-	xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
-			  'wb', 'UTF-8')
+	filepath = os.path.join(options.dstpath, options.dstname_xml)
+	xfp = codecs.open(filepath, 'wb', 'UTF-8')
 	self.dom.writexml(xfp, encoding='UTF-8')
 	xfp.close()
+
+register_export_class('mnemosyne', MnemosyneFile)
 

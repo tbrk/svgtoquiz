@@ -14,12 +14,12 @@
 # License for more details.
 #
 
-__all__ = ['options', 'svgmanip', 'mnemosyne',
-	   'cvsgui', 'hasGUI', 'main', '__version__']
+__all__ = ['options', 'svgmanip', 'register_export_class',
+	   'ExportFile', 'cvsgui', 'hasGUI', 'main', '__version__']
 
 import options
 import svgmanip
-import mnemosyne
+from export import register_export_class, ExportFile
 from version import __version__
 from main import main
 

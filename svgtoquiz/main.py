@@ -14,10 +14,11 @@
 # License for more details.
 #
 
-import sys, os, os.path, codecs, stat
+import sys, os, os.path, stat
 import xml.dom.minidom
-import cvsgui, mnemosyne, svgmanip
+import cvsgui, svgmanip
 from options import options
+from export import Export, ExportError
 
 import shutil
 from pkg_resources import resource_filename, resource_listdir
@@ -38,6 +39,7 @@ def main():
     locale.setlocale(locale.LC_ALL, '')
 
     options.parseArguments(sys.argv[1:])
+    export = Export()
 
     if options.extract_docs != None:
 	dstdir = options.extract_docs
@@ -121,25 +123,26 @@ def main():
     mapdom.unlink()
 
     debug(1, '-making questions')
-    if options.multiple_choice:
-	if name_map == None:
-	    print >> sys.stderr, 'Option --multiple-choice requires a csv file.'
-	    return 1
-	export = mnemosyne.make_multiple_choice(names, name_map,
-						options.category, options.q_img)
-    else:
-	export = mnemosyne.make_questions(names, name_map,
-					  options.category, options.q_img)
-    edom = export.toXmlDom()
-    xfp = codecs.open(os.path.join(options.dstpath, options.dstname_xml),
-		      'wb', 'UTF-8')
-    edom.writexml(xfp, encoding='UTF-8')
-    xfp.close()
+    try:
+	if options.multiple_choice:
+	    if name_map == None:
+		print >> sys.stderr, 'Option --multiple-choice requires a csv file.'
+		return 1
+	    output = export.make_multiple_choice(names, name_map,
+						 options.category, options.q_img)
+	else:
+	    output = export.make_questions(names, name_map,
+					   options.category, options.q_img)
+	output.write()
 
-    debug(1, '-generating question image')
-    svgmanip.svg_to_png(options.srcpath_svg,
-			os.path.join(options.dstpath, options.q_img))
+	debug(1, '-generating question image')
+	svgmanip.svg_to_png(options.srcpath_svg,
+			    os.path.join(options.dstpath, options.q_img))
     
+    except ExportError, e:
+	print >> sys.stderr, e.msg
+	return 1
+
     debug(1, '-done')
     return 0
 

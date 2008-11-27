@@ -50,6 +50,9 @@ class Options:
 
     parser.add_option('-d', '--dst-path', dest='dstpath', metavar='<path>',
 		      help='specify a location to put the results.')
+    parser.add_option('-x', '--export', dest='export', metavar='<filetype>',
+		      default='mnemosyne',
+		      help='specify the format of the results.')
     parser.add_option('-n', '--name', dest='name', metavar='<string>',
 		      help='use a different name')
     parser.add_option('-r', '--randomize', dest='random_order',
@@ -284,6 +287,8 @@ class Options:
 
 	self.match_csv	    = options.match_csv
 	self.run_csvgui	    = options.run_csvgui
+
+	self.export	    = options.export.lower()
 
 	try: self.skip_groups    = int(options.skip_groups)
 	except:
