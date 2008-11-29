@@ -15,11 +15,8 @@
 #
 
 import os, os.path, random, sys
-from options import options
+from options import options, Error
 from pkg_resources import resource_filename, resource_listdir
-
-# TODO: instructions for adding a new export class.
-# TODO: print the available export types in -h
 
 plugins = {}
 
@@ -32,14 +29,17 @@ class ExportFile:
     """
     Parent class for export plugins. 
     """
+    # set this:
+    name = ""
 
     # Refine this: and call Export.register(name, class)
-    def __init__(self, category):
+    def __init__(self, category, filepath):
 	"""
 	Initialize an export file with a category name.
 	"""
 	self.nextid = -1
 	self.category = category
+	self.filepath = filepath
 
     # Refine this:
     def addItem(self, objname, blank, highlighted, addnormal, addinverse):
@@ -67,6 +67,14 @@ class ExportFile:
 	"""
 	pass
 
+    # Optionally refine this:
+    def init(cls):
+	"""
+	Called just after options have been parsed, but before any other
+	work is done.
+	"""
+    init = classmethod(init)
+
     #------------------------------------------------------------------
     # Utility functions:
 
@@ -77,11 +85,23 @@ class ExportFile:
 	self.nextid += 1
 	return str(self.nextid)
 
+    def warning(cls, msg):
+	"""
+	Print a warning message.
+	"""
+	if isinstance(msg, list):
+	    for line in msg:
+		print >> sys.stderr, "%s:%s:%s" % (options.progname,
+						   cls.name, line)
+	else:
+	    print >> sys.stderr, "%s:%s:%s" % (options.progname, cls.name, msg)
+	
+    warning = classmethod(warning)
+
 #----------------------------------------------------------------------
 
-class ExportError:
-    def __init__(self, msg):
-	self.msg = msg
+class ExportError(Error):
+    pass
 
 class Export:
     """
@@ -98,6 +118,10 @@ class Export:
 		    __import__(plugin[:-3])
 		except:
 		    print >> sys.stderr, 'Error in ' + plugin
+	
+	if not plugins.has_key(options.export):
+	    raise ExportError('Invalid export type: ' + options.export)
+	plugins[options.export].init();
 
     def make_questions(self, names, name_map=None, cat='Map', qimgfile=None):
 	"""
@@ -107,9 +131,8 @@ class Export:
 	A category can be specified by category.
 	"""
 
-	if not plugins.has_key(options.export):
-	    raise ExportError('Invalid export type: ' + options.export)
-	e = plugins[options.export](cat);
+	e = plugins[options.export](cat, os.path.join(options.dstpath,
+						      options.name));
 
 	qpath = ''
 	if qimgfile:
@@ -139,7 +162,7 @@ class Export:
 	    e.addItem(fullname, qpath, n_path,
 		      options.create_normal, options.create_inverse)
 
-	return e
+	e.write()
 
     def make_multiple_choice(self, names,
 			     name_map=None, cat='Multiple', qimgfile=None):
@@ -150,9 +173,8 @@ class Export:
 	A category can be specified by category.
 	"""
 
-	if not plugins.has_key(options.export):
-	    raise ExportError('Invalid export type: ' + options.export)
-	e = plugins[options.export](cat);
+	e = plugins[options.export](cat, os.path.join(options.dstpath,
+						      options.name));
 
 	qpath = ''
 	if qimgfile:
@@ -178,5 +200,5 @@ class Export:
 
 	    e.addItem(qtext, qpath, n_path, True, False)
 
-	return e
+	e.write()
 

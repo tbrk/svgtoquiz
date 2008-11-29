@@ -1,8 +1,11 @@
-svgtoquiz-1.4.2
-    * handle, in addition to path elements:
+svgtoquiz-1.5.0
+    * Handle, in addition to path elements:
 	circle, rect, ellipse, polygon
-    * add the multiple-choice feature and French-IPA-Vowels example.
-    * Fix the Human Skeleton example (thanks to Bill Price)
+    * Add the multiple-choice feature and French-IPA-Vowels example.
+    * Fix the Human Skeleton example (thanks to Bill Price).
+    * Add architecture for export plugins.
+    * Add an export plugin for ndsrs (suggestion from Uwe Beiküfner).
+    * Add --width and --height options (alternative to --zoom).
 
 svgtoquiz-1.4.1	    20080609
     * id-regex and not-id-regex now match anywhere in an id.

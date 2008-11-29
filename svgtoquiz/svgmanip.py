@@ -23,7 +23,7 @@
 import sys, re, os, codecs, subprocess
 import platform
 import csv, cStringIO
-from options import options
+from options import options, Error
 
 #----------------------------------------------------------------------
 
@@ -31,6 +31,9 @@ INKSCAPE_DPI = 90.0
 IGNORE = '_ignore_'
 
 #----------------------------------------------------------------------
+
+class SvgError(Error):
+    pass
 
 def debug(priority, str):
     if priority <= options.debug:
@@ -123,19 +126,32 @@ def svg_to_png(svg_path, png_path):
     png_path.replace('"', '\\"')
 
     if options.svgtopng_prog == 'inkscape':
-	zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom), 0.1),
-			    10000)
+	if (options.width == None and options.height == None):
+	    zoom = '%.1f' % min(max(float(INKSCAPE_DPI) * float(options.zoom),
+				    0.1), 10000)
+	    size = ['--export-dpi=' + zoom]
+	else:
+	    size = []
+	    if (options.width != None):
+		size.append('-w' + str(options.width))
+	    if (options.height != None):
+		size.append('-h' + str(options.height))
+
 	cmd = u' '.join([options.svgtopng_path,
 			 '--without-gui',
-			 '--export-png=' + png_path,
-			 '--export-dpi=' + zoom,
-			 svg_path])
+			 '--export-png=' + png_path] + size + [svg_path])
     else:
-	zoom = str(options.zoom)
-	cmd = u' '.join([options.svgtopng_path,
-			 '--x-zoom', zoom,
-			 '--y-zoom', zoom,
-			 svg_path, png_path])
+	if (options.width == None and options.height == None):
+	    zoom = str(options.zoom)
+	    size = ['--x-zoom', zoom, '--y-zoom', zoom]
+	else:
+	    size = []
+	    if (options.width != None):
+		size.append('-w ' + str(options.width))
+	    if (options.height != None):
+		size.append('-h ' + str(options.height))
+
+	cmd = u' '.join([options.svgtopng_path] + size + [svg_path, png_path])
     cmd = cmd.encode(options.encoding)
     debug(2, '-svgtopng: ' + cmd)
     data = ""
@@ -150,9 +166,7 @@ def svg_to_png(svg_path, png_path):
 	print >> sys.stderr, reason
 	r = -1
     if r != 0:
-	print >> sys.stderr, ("%s: svg to png conversion failed (%s).\n"
-			      % (r, options.progname))
-	sys.exit(r)
+	raise SvgError("svg to png conversion failed (" + str(r) + ").")
     debug(2, '-output:\n' + data)
 
 def make_image(svg, (name, node), dir_path, prefix, style):
@@ -173,9 +187,7 @@ def make_image(svg, (name, node), dir_path, prefix, style):
 	svg.writexml(fp)
 	fp.close()
     except IOError, reason:
-	print >> sys.stderr, (u'%s: cannot create %s (%s)' %
-			      (options.progname, svg_path, reason))
-	sys.exit(1)
+	raise SvgError(u'cannot create %s (%s)' % (svg_path, reason))
 
     if options.to_png:
 	svg_to_png(svg_path, png_path)

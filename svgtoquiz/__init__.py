@@ -14,14 +14,17 @@
 # License for more details.
 #
 
-__all__ = ['options', 'svgmanip', 'register_export_class',
-	   'ExportFile', 'cvsgui', 'hasGUI', 'main', '__version__']
+__all__ = ['svgtoquiz', 'options', 'svgmanip', 'register_export_class',
+	   'ExportFile', 'cvsgui', 'hasGUI', 'main', '__version__',
+	   'OptionError', 'SvgError', 'ExportError']
 
 import options
+from options import OptionError
 import svgmanip
-from export import register_export_class, ExportFile
+from svgmanip import SvgError
+from export import register_export_class, ExportFile, ExportError
 from version import __version__
-from main import main
+from main import main, svgtoquiz
 
 try:
     import cvsgui

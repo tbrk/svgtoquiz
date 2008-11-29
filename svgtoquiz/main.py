@@ -17,7 +17,8 @@
 import sys, os, os.path, stat
 import xml.dom.minidom
 import cvsgui, svgmanip
-from options import options
+from svgmanip import SvgError
+from options import options, OptionError
 from export import Export, ExportError
 
 import shutil
@@ -35,10 +36,7 @@ try:
 except ImportError:
     hasGUI=False
 
-def main():
-    locale.setlocale(locale.LC_ALL, '')
-
-    options.parseArguments(sys.argv[1:])
+def run_svgtoquiz():
     export = Export()
 
     if options.extract_docs != None:
@@ -128,12 +126,11 @@ def main():
 	    if name_map == None:
 		print >> sys.stderr, 'Option --multiple-choice requires a csv file.'
 		return 1
-	    output = export.make_multiple_choice(names, name_map,
-						 options.category, options.q_img)
+	    export.make_multiple_choice(names, name_map,
+					options.category, options.q_img)
 	else:
-	    output = export.make_questions(names, name_map,
-					   options.category, options.q_img)
-	output.write()
+	    export.make_questions(names, name_map,
+				  options.category, options.q_img)
 
 	debug(1, '-generating question image')
 	svgmanip.svg_to_png(options.srcpath_svg,
@@ -145,4 +142,20 @@ def main():
 
     debug(1, '-done')
     return 0
+
+def main():
+    locale.setlocale(locale.LC_ALL, '')
+
+    try:
+	options.parseArguments(sys.argv[1:])
+	r = run_svgtoquiz ()
+    except OptionError, e: e.show(); r = 1
+    except SvgError, e: e.show(); r = 2 
+    except ExportError, e: e.show(); r = 3
+
+    sys.exit(r)
+
+def svgtoquiz(arglist):
+    options.parseArguments(arglist)
+    return run_svgtoquiz ()
 

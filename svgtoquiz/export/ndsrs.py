@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id$
+# $Id: mnemosyne.py 183 2008-11-27 10:49:09Z tbourke $
 #
 # Copyright (c) 2008 Timothy Bourke. All rights reserved.
 # 
@@ -18,11 +18,11 @@ import xml.dom.minidom, os.path, codecs
 from svgtoquiz import register_export_class, ExportFile, options
 import random
 
-class MnemosyneFile(ExportFile):
+class NdsrsFile(ExportFile):
     """
-    Export plugin for Mnemosyne.
+    Export plugin for NDSRS.
     """
-    name = "mnemosyne"
+    name = "ndsrs"
 
     def makeTextNode(self, tagName, text):
 	"""
@@ -36,36 +36,35 @@ class MnemosyneFile(ExportFile):
 	"""
 	Initialize an export file with a category name.
 	"""
-	ExportFile.__init__(self, category, filepath + '.xml')
-
+	ExportFile.__init__(self, category, filepath + '.srs')
 	self.items = []
 
+	self.fontsize = 28
+
 	self.dom = xml.dom.minidom.Document()
-	m = self.dom.createElement('mnemosyne')
-
-	m.setAttribute('core_version', '1')
+	m = self.dom.createElement('deck')
 	self.dom.appendChild(m)
-	self.mnemosyne = m
+	self.deck = m
 
-	c = self.dom.createElement('category')
-	c.setAttribute('active', '1')
-	c.appendChild(self.makeTextNode('name', category))
-	m.appendChild(c)
-
-    def addXMLItem(self, id, q, a):
+    def addXMLItem(self, q, a, qimg = None, aimg = None):
 	"""
 	Given an xml dom object, return an xml element representing the
 	item.
 	"""
-	e = self.dom.createElement('item')
-	e.setAttribute('id', id)
-	e.setIdAttribute('id')
+	e = self.dom.createElement('card')
 
-	e.appendChild(self.makeTextNode('cat', self.category))
-	e.appendChild(self.makeTextNode('Q', q))
-	e.appendChild(self.makeTextNode('A', a))
+	qitem = self.makeTextNode('question', q)
+	qitem.setAttribute('size', str(self.fontsize))
+	if qimg != None: qitem.setAttribute('image', qimg)
 
-	self.mnemosyne.appendChild(e)
+	aitem = self.makeTextNode('answer', a)
+	qitem.setAttribute('size', str(self.fontsize))
+	if qimg != None: aitem.setAttribute('image', aimg)
+
+	e.appendChild(qitem)
+	e.appendChild(aitem)
+
+	self.deck.appendChild(e)
 
     def addItem(self, objname, blank, highlighted, addnormal, addinverse):
 	"""
@@ -84,26 +83,11 @@ class MnemosyneFile(ExportFile):
 			image in the question.
 	"""
 
-	qimg = ''
-	if blank != None: qimg = '<img src="%s">' % blank
-
-	if options.overlay:
-	    cardstyle = '<card style="answerbox: overlay"/>'
-	else:
-	    cardstyle = ''
-
-	id = self.nextId()
-	idinv = id + '.inv'
-
 	if addnormal:
-	    q = '<b>%s?</b>\n%s%s' % (objname, qimg, cardstyle)
-	    a = '<b>%s</b>\n<img src="%s">' % (objname, highlighted)
-	    self.items.append((id, q, a))
+	    self.items.append((objname + '?', objname, blank, highlighted))
 
 	if addinverse:
-	    qinv = '<img src="%s">' % highlighted
-	    ainv = '<b>' + objname + '</b>'
-	    self.items.append((idinv, qinv, ainv))
+	    self.items.append(('', objname, highlighted, highlighted))
 
     def write(self):
 	"""
@@ -113,12 +97,29 @@ class MnemosyneFile(ExportFile):
 	if options.random_order:
 	    random.shuffle(self.items)
 
-	for (id, q, a) in self.items:
-	    self.addXMLItem(id, q, a)
+	for (q, a, qimg, aimg) in self.items:
+	    self.addXMLItem(q, a, qimg, aimg)
 
 	xfp = codecs.open(self.filepath, 'wb', 'UTF-8')
 	self.dom.writexml(xfp, encoding='UTF-8')
 	xfp.close()
 
-register_export_class(MnemosyneFile.name, MnemosyneFile)
+    def init(cls):
+	"""
+	Called just after options have been parsed, but before any other
+	work is done.
+	"""
+	if options.width != None and options.width != 256:
+	    cls.warning("ignoring width option.")
+	if options.height != None and options.height != 180:
+	    cls.warning("ignoring height option.")
+	if options.zoom != 1.0:
+	    cls.warning("ignoring zoom option.")
+	
+	if not options.just_height: options.width = 256
+	if not options.just_width: options.height = 180
+
+    init = classmethod(init)
+
+register_export_class(NdsrsFile.name, NdsrsFile)
 

@@ -31,6 +31,20 @@ def debug(priority, str):
     if priority <= options.debug:
 	print >> sys.stderr, str
 
+class Error:
+    def __init__(self, msg):
+	if isinstance(msg, list):
+	    self.msg = msg
+	else:
+	    self.msg = [msg]
+
+    def show(self):
+	for line in self.msg:
+	    print >> sys.stderr, "%s:%s" % (options.progname, line)
+
+class OptionError(Error):
+    pass
+
 class Options:
     parser = OptionParser(usage="%prog [options] <name>",
 			  version="%prog " + __version__,
@@ -38,9 +52,20 @@ class Options:
 
     parser.add_option('-c', '--category', dest='category', metavar='<category>',
 		      help='specify the category')
+
     parser.add_option('-z', '--zoom', dest='zoom', metavar='<float>',
 		      default=1.0,
 		      help='enlarge or reduce the produced images')
+    parser.add_option('--width', dest='width', metavar='<int>',
+		      default=None,
+		      help='specify the width of output images')
+    parser.add_option('--justwidth', dest='just_width', action='store_true',
+		      default=False, help='only fix the output width.')
+    parser.add_option('--height', dest='height', metavar='<int>',
+		      default=None,
+		      help='specify the height of output images')
+    parser.add_option('--justheight', dest='just_height', action='store_true',
+		      default=False, help='only fix the output height.')
 
     parser.add_option('-s', '--id-regex', dest='id_regex', metavar='<regex>',
 		      help='match path ids (regex with one bracketed group)')
@@ -135,7 +160,6 @@ class Options:
 	self.name        = name.decode(self.encoding)
 	self.srcpath_svg = self.name + '.svg'
 	self.srcpath_csv = self.name + '.csv'
-	self.dstname_xml = self.name + '.xml'
 	self.q_img       = self.name + '.png'
 	self.category	 = self.name.replace('_', ' ')
 
@@ -169,9 +193,7 @@ class Options:
     def getSvgToPngProg(self, path):
 	progmatch = re.search(r'(rsvg|inkscape)[^/\\]*$', path, re.IGNORECASE)
 	if progmatch == None:
-	    print >> sys.stderr, ('%s: svgtopng can only be rsvg or inkscape.'
-				  % self.progname)
-	    sys.exit(1)
+	    raise OptionError('svgtopng can only be rsvg or inkscape.')
 	return progmatch.group(1).lower()
     
     def setSvgToPng(self, option_path):
@@ -224,13 +246,9 @@ class Options:
 	    if found: break
 
 	if not found:
-	    print >> sys.stderr, (
-		'%s: cannot find a suitable svgtopng program (inkscape or rsvg)'
-		% self.progname)
-	    print >> sys.stderr, (
-		'%s: please specify a path manually with --svgtopng=<path>'
-		% self.progname)
-	    sys.exit(1)
+	    raise OptionError([
+		'cannot find a suitable svgtopng program (inkscape or rsvg)',
+		'please specify a path manually with --svgtopng=<path>'])
 
 	self.svgtopng_prog = self.getSvgToPngProg(exe)
 	self.svgtopng_path = exe
@@ -238,15 +256,17 @@ class Options:
     def parseArguments(self, arguments):
 	(options, args) = self.parser.parse_args(arguments)
 
-	self.debug	    = int(options.debug)
+	try:
+	    self.debug = int(options.debug)
+	except:
+	    self.debug = 1
 	debug(1, '-svgtoquiz ' + __version__)
 
 	if args: self.setName(args[0])
 	elif options.extract_docs != None:
 	    self.setName('noname')
 	else:
-	    print >> sys.stderr, '%s: no name specified.' % self.progname
-	    sys.exit(1)
+	    raise OptionError('no name specified.')
 
 	if options.srcpath_csv:
 	    self.srcpath_csv = options.srcpath_csv.decode(self.encoding)
@@ -272,7 +292,17 @@ class Options:
 	if options.extract_docs == None:
 	    self.setSvgToPng(options.svgtopng_path)
 	
-	self.zoom	    = options.zoom
+	self.width	    = options.width
+	self.just_width	    = options.just_width
+	self.height	    = options.height
+	self.just_height    = options.just_height
+	if (self.zoom != 1.0) and (self.width != None or self.height != None):
+	    self.zoom	    = 1.0
+	    print >> sys.stderr, ("%s: width/height preclude zoom.\n"
+				   % self.progname)
+	else:
+	    self.zoom	    = options.zoom
+
 	self.random_order   = options.random_order
 	self.show_names     = options.show_names
 	self.create_normal  = options.create_normal
@@ -292,9 +322,7 @@ class Options:
 
 	try: self.skip_groups    = int(options.skip_groups)
 	except:
-	    print >> sys.stderr, ("%s: argument of --groups must be numeric.\n"
-				  % self.progname)
-	    sys.exit(1)
+	    raise OptionError("argument of --groups must be numeric.")
 
 	if self.setGroupRegex(options.group_enter, options.group_noenter):
 	    self.skip_groups = max(0, self.skip_groups)
@@ -311,20 +339,19 @@ class Options:
 	if options.run_csvgui:      num_mode += 1
 
 	if num_mode > 1:
-	    print >> sys.stderr, ("%s: only one mode command may be given.\n"
-				  % self.progname)
-	    sys.exit(1)
+	    raise OptionError("only one mode command may be given.")
 
     def debugPrint(self):
-	variables = [('dstpath',       self.dstpath),
+	variables = [('export',        self.export),
+		     ('dstpath',       self.dstpath),
 		     ('exportpath',    self.exportpath),
 		     ('srcpath_svg',   self.srcpath_svg),
 		     ('srcpath_csv',   self.srcpath_csv),
-		     ('dstname_xml',   self.dstname_xml),
 		     ('q_img',	       self.q_img),
 		     ('svgtopng_prog', self.svgtopng_prog),
 		     ('svgtopng_path', self.svgtopng_path)]
-	for v in variables: print >> sys.stderr, '- %s:\t%s' % v
+	print >> sys.stderr, '-options:'
+	for v in variables: print >> sys.stderr, '-  %s:\t%s' % v
 
     def __init__(self, progname):
 	(self.lang, self.encoding) = locale.getdefaultlocale()
