@@ -7,7 +7,7 @@ import sys
 
 try:
     r= svgtoquiz(['-d', '/tmp/TEST',
-		  '--export=ndsrs',
+		  '--export=ndsrs(fontsize=18)',
 		  '--randomize',
 		  '--name=States_of_the_USA',
 		  '--id-regex=^(..)_1_$'

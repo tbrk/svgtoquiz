@@ -39,8 +39,6 @@ class NdsrsFile(ExportFile):
 	ExportFile.__init__(self, category, filepath + '.srs')
 	self.items = []
 
-	self.fontsize = 28
-
 	self.dom = xml.dom.minidom.Document()
 	m = self.dom.createElement('deck')
 	self.dom.appendChild(m)
@@ -104,22 +102,39 @@ class NdsrsFile(ExportFile):
 	self.dom.writexml(xfp, encoding='UTF-8')
 	xfp.close()
 
-    def init(cls):
+    def init(cls, args = []):
 	"""
 	Called just after options have been parsed, but before any other
 	work is done.
 	"""
-	if options.width != None and options.width != 256:
-	    cls.warning("ignoring width option.")
-	if options.height != None and options.height != 180:
-	    cls.warning("ignoring height option.")
+	cls.setExportDefaultPath(os.path.join(os.path.expanduser('~'),
+					      '.ndsrs'))
+
+	just_width = False
+	just_height = False
+	cls.fontsize = 28
+
+	for (n, v) in args:
+	    if n == "justwidth":
+		just_width = True
+
+	    elif n == "justheight":
+		just_height = True
+
+	    elif n == "fontsize" and v.isdigit():
+		cls.fontsize = int(v)
+
+	    else:
+		cls.warning('invalid option: %s %s' % (n, v))
+	
 	if options.zoom != 1.0:
 	    cls.warning("ignoring zoom option.")
 	
-	if not options.just_height: options.width = 256
-	if not options.just_width: options.height = 180
+	if options.zoom == 1.0:
+	    if not just_height and options.width == None:  options.width = 256
+	    if not just_width  and options.height == None: options.height = 180
 
     init = classmethod(init)
 
-register_export_class(NdsrsFile.name, NdsrsFile)
+register_export_class(NdsrsFile)
 

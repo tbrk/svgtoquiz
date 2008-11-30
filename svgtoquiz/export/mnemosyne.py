@@ -120,5 +120,14 @@ class MnemosyneFile(ExportFile):
 	self.dom.writexml(xfp, encoding='UTF-8')
 	xfp.close()
 
-register_export_class(MnemosyneFile.name, MnemosyneFile)
+    def init(cls, args = []):
+	"""
+	Called just after options have been parsed, but before any other
+	work is done.
+	"""
+	cls.setExportDefaultPath(os.path.join(os.path.expanduser('~'),
+					      '.mnemosyne'))
+    init = classmethod(init)
+
+register_export_class(MnemosyneFile)
 

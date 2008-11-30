@@ -14,14 +14,15 @@
 # License for more details.
 #
 
-import os, os.path, random, sys
+import os, os.path, random, sys, re
 from options import options, Error
 from pkg_resources import resource_filename, resource_listdir
+import traceback
 
 plugins = {}
 
-def register_export_class(name, cls):
-    plugins[name.lower()] = cls
+def register_export_class(cls):
+    plugins[cls.name.lower()] = cls
 
 #----------------------------------------------------------------------
 
@@ -68,7 +69,7 @@ class ExportFile:
 	pass
 
     # Optionally refine this:
-    def init(cls):
+    def init(cls, args = []):
 	"""
 	Called just after options have been parsed, but before any other
 	work is done.
@@ -98,6 +99,14 @@ class ExportFile:
 	
     warning = classmethod(warning)
 
+    def setExportDefaultPath(cls, path):
+	"""
+	Expand out '${EXPORTDEFAULT}' in options.dstpath.
+	"""
+	options.dstpath = options.dstpath.replace('${EXPORTDEFAULT}', path)
+
+    setExportDefaultPath = classmethod(setExportDefaultPath)
+
 #----------------------------------------------------------------------
 
 class ExportError(Error):
@@ -108,6 +117,25 @@ class Export:
     Export to file.
     """
 
+    def get_export_spec():
+	m = re.match(r'(?P<module>[^(]*)(\((?P<args>.*)\))?', options.export)
+	argstr = m.group('args')
+	if argstr == None: argstr = ""
+
+	args = []
+	for a in argstr.split(","):
+	    if a == "": continue
+
+	    nv = a.split('=', 1)
+	    if len(nv) > 1:
+		args.append((nv[0], nv[1]))
+	    else:
+		args.append((nv[0], ""))
+
+	return (m.group('module'), args)
+
+    get_export_spec = staticmethod(get_export_spec)
+
     def __init__(self):
 	plugindir = resource_filename(__name__, 'export')
 
@@ -116,12 +144,17 @@ class Export:
 	    if plugin.endswith(".py"):
 		try:
 		    __import__(plugin[:-3])
-		except:
-		    print >> sys.stderr, 'Error in ' + plugin
+		except Exception, err:
+		    print >> sys.stderr, '*' * 78
+		    print >> sys.stderr, '* Error in ' + plugin + ':'
+		    traceback.print_exc(file=sys.stderr)
+		    print >> sys.stderr, '*' * 78
 	
-	if not plugins.has_key(options.export):
-	    raise ExportError('Invalid export type: ' + options.export)
-	plugins[options.export].init();
+	(module, args) = self.get_export_spec()
+	
+	if not plugins.has_key(module):
+	    raise ExportError('Invalid export type: ' + module)
+	plugins[module].init(args);
 
     def make_questions(self, names, name_map=None, cat='Map', qimgfile=None):
 	"""
@@ -131,8 +164,8 @@ class Export:
 	A category can be specified by category.
 	"""
 
-	e = plugins[options.export](cat, os.path.join(options.dstpath,
-						      options.name));
+	(module, args) = self.get_export_spec()
+	e = plugins[module](cat, os.path.join(options.dstpath, options.name));
 
 	qpath = ''
 	if qimgfile:
@@ -173,8 +206,8 @@ class Export:
 	A category can be specified by category.
 	"""
 
-	e = plugins[options.export](cat, os.path.join(options.dstpath,
-						      options.name));
+	(module, args) = self.get_export_spec()
+	e = plugins[module](cat, os.path.join(options.dstpath, options.name));
 
 	qpath = ''
 	if qimgfile:

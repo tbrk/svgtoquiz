@@ -59,13 +59,9 @@ class Options:
     parser.add_option('--width', dest='width', metavar='<int>',
 		      default=None,
 		      help='specify the width of output images')
-    parser.add_option('--justwidth', dest='just_width', action='store_true',
-		      default=False, help='only fix the output width.')
     parser.add_option('--height', dest='height', metavar='<int>',
 		      default=None,
 		      help='specify the height of output images')
-    parser.add_option('--justheight', dest='just_height', action='store_true',
-		      default=False, help='only fix the output height.')
 
     parser.add_option('-s', '--id-regex', dest='id_regex', metavar='<regex>',
 		      help='match path ids (regex with one bracketed group)')
@@ -182,10 +178,11 @@ class Options:
     def setDstPath(self, path):
 	re.sub(r'[/\\]$', '', path)
 
-	# Relative paths (without leading dot) go into .mnemosyne directory
+	# Relative paths (without leading dot) go into a default directory
+	# specified (later) by the chosen export module.
 	if re.match(r'^[^./]', path):
 	    self.exportpath = path
-	    self.dstpath = os.path.join(os.path.expanduser('~'), '.mnemosyne', path)
+	    self.dstpath = os.path.join('${EXPORTDEFAULT}', path)
 	else:
 	    self.exportpath = path
 	    self.dstpath = path
@@ -293,9 +290,7 @@ class Options:
 	    self.setSvgToPng(options.svgtopng_path)
 	
 	self.width	    = options.width
-	self.just_width	    = options.just_width
 	self.height	    = options.height
-	self.just_height    = options.just_height
 	if (self.zoom != 1.0) and (self.width != None or self.height != None):
 	    self.zoom	    = 1.0
 	    print >> sys.stderr, ("%s: width/height preclude zoom.\n"
