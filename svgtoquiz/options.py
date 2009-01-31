@@ -284,7 +284,7 @@ class Options:
 	if options.dstpath:
 	    self.setDstPath(options.dstpath.decode(self.encoding))
 	elif self.name:
-	    self.setDstPath(os.path.join(u'maps', self.name))
+	    self.setDstPath(self.name)
 
 	if options.extract_docs == None:
 	    self.setSvgToPng(options.svgtopng_path)

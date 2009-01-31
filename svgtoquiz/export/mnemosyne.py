@@ -126,7 +126,8 @@ class MnemosyneFile(ExportFile):
 	work is done.
 	"""
 	cls.setExportDefaultPath(os.path.join(os.path.expanduser('~'),
-					      '.mnemosyne'))
+			         os.path.join('.mnemosyne', 'maps')))
+
     init = classmethod(init)
 
 register_export_class(MnemosyneFile)

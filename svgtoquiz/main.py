@@ -114,6 +114,10 @@ def run_svgtoquiz():
 	print >> sys.stderr, '(' + e.strerror + ')'
 	return 1
 
+    debug(1, '-generating question image (dir=%s name=%s)' %
+		(options.dstpath, options.name))
+    svgmanip.convert_svg(svg, options.dstpath, options.name)
+    
     debug(1, '-generating images')
     (namesAndNodes, name_map) = svgmanip.read_names_and_nodes(svg, name_map)
     names = svgmanip.make_state_maps(svg, namesAndNodes, options.dstpath,
@@ -132,10 +136,6 @@ def run_svgtoquiz():
 	    export.make_questions(names, name_map,
 				  options.category, options.q_img)
 
-	debug(1, '-generating question image')
-	svgmanip.svg_to_png(options.srcpath_svg,
-			    os.path.join(options.dstpath, options.q_img))
-    
     except ExportError, e:
 	print >> sys.stderr, e.msg
 	return 1

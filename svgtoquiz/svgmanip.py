@@ -169,18 +169,13 @@ def svg_to_png(svg_path, png_path):
 	raise SvgError("svg to png conversion failed (" + str(r) + ").")
     debug(2, '-output:\n' + data)
 
-def make_image(svg, (name, node), dir_path, prefix, style):
-    if node.tagName == 'g':
-	prev_branch = node.cloneNode(deep=True)
-	for e in allsvgobj_iter(node):
-	    fill_style(e, style)
-	for e in node.getElementsByTagName('g'):
-	    fill_style(e, style)
+def convert_svg(svg, dir_path, name):
+    """
+    Turn an svg map into a graphic file.
+    """
 
-    prev_style = fill_style(node, style)
-
-    svg_path = os.path.join(dir_path, prefix + name + '.svg')
-    png_path = os.path.join(dir_path, prefix + name + '.png')
+    svg_path = os.path.join(dir_path, name + '.svg')
+    png_path = os.path.join(dir_path, name + '.png')
 
     try:
 	fp = codecs.open(svg_path, 'w', 'UTF-8')
@@ -192,6 +187,18 @@ def make_image(svg, (name, node), dir_path, prefix, style):
     if options.to_png:
 	svg_to_png(svg_path, png_path)
 	if not options.keep_svg: os.remove(svg_path)
+
+def make_image(svg, (name, node), dir_path, prefix, style):
+    if node.tagName == 'g':
+	prev_branch = node.cloneNode(deep=True)
+	for e in allsvgobj_iter(node):
+	    fill_style(e, style)
+	for e in node.getElementsByTagName('g'):
+	    fill_style(e, style)
+
+    prev_style = fill_style(node, style)
+
+    convert_svg(svg, dir_path, prefix + name)
 
     if node.tagName == 'g':
 	parent = node.parentNode

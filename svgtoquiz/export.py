@@ -118,7 +118,7 @@ class Export:
     """
 
     def get_export_spec():
-	m = re.match(r'(?P<module>[^(]*)(\((?P<args>.*)\))?', options.export)
+	m = re.match(r'(?P<module>[^( ]*) *(\((?P<args>.*)\))?', options.export)
 	argstr = m.group('args')
 	if argstr == None: argstr = ""
 

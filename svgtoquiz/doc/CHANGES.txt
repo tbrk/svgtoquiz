@@ -6,6 +6,9 @@ svgtoquiz-1.5.0
     * Add architecture for export plugins.
     * Add an export plugin for ndsrs (suggestion from Uwe Beiküfner).
     * Add --width and --height options (alternative to --zoom).
+    * Fix a long standing bug export bug on windows where the
+      unhighlighted image was not copied to the export directory
+      (Thanks to the persistence of Uwe Beiküfner).
 
 svgtoquiz-1.4.1	    20080609
     * id-regex and not-id-regex now match anywhere in an id.

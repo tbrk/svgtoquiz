@@ -14,7 +14,7 @@
 # License for more details.
 #
 
-import xml.dom.minidom, os.path, codecs
+import xml.dom.minidom, os, os.path, codecs
 from svgtoquiz import register_export_class, ExportFile, options
 import random
 
@@ -56,8 +56,8 @@ class NdsrsFile(ExportFile):
 	if qimg != None: qitem.setAttribute('image', qimg)
 
 	aitem = self.makeTextNode('answer', a)
-	qitem.setAttribute('size', str(self.fontsize))
-	if qimg != None: aitem.setAttribute('image', aimg)
+	aitem.setAttribute('size', str(self.fontsize))
+	if aimg != None: aitem.setAttribute('image', aimg)
 
 	e.appendChild(qitem)
 	e.appendChild(aitem)
@@ -81,11 +81,14 @@ class NdsrsFile(ExportFile):
 			image in the question.
 	"""
 
+	blank = 'data/img/' + os.path.basename(blank)
+	highlighted = 'data/img/' + os.path.basename(highlighted)
+
 	if addnormal:
 	    self.items.append((objname + '?', objname, blank, highlighted))
 
 	if addinverse:
-	    self.items.append(('', objname, highlighted, highlighted))
+	    self.items.append(('', objname, highlighted, None))
 
     def write(self):
 	"""
@@ -107,12 +110,11 @@ class NdsrsFile(ExportFile):
 	Called just after options have been parsed, but before any other
 	work is done.
 	"""
-	cls.setExportDefaultPath(os.path.join(os.path.expanduser('~'),
-					      '.ndsrs'))
+	cls.setExportDefaultPath(os.getcwd())
 
 	just_width = False
 	just_height = False
-	cls.fontsize = 28
+	cls.fontsize = 12
 
 	for (n, v) in args:
 	    if n == "justwidth":
