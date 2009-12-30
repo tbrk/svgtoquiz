@@ -99,11 +99,15 @@ class ExportFile:
 	
     warning = classmethod(warning)
 
-    def setExportDefaultPath(cls, path):
+    def setExportDefaultPath(cls, root, sub):
 	"""
-	Expand out '${EXPORTDEFAULT}' in options.dstpath.
+	Expand out '${EXPORTDEFAULTROOT}' and '${EXPORTDEFAULTSUB}'
+	in options.dstpath, and ${EXPORTDEFAULTSUB} in options.exportpath.
 	"""
-	options.dstpath = options.dstpath.replace('${EXPORTDEFAULT}', path)
+	options.dstpath = options.dstpath.replace('${EXPORTDEFAULTROOT}', root)
+	options.dstpath = options.dstpath.replace('${EXPORTDEFAULTSUB}', sub)
+
+	options.exportpath = options.exportpath.replace('${EXPORTDEFAULTSUB}', sub)
 
     setExportDefaultPath = classmethod(setExportDefaultPath)
 

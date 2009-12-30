@@ -110,7 +110,7 @@ class NdsrsFile(ExportFile):
 	Called just after options have been parsed, but before any other
 	work is done.
 	"""
-	cls.setExportDefaultPath(os.getcwd())
+	cls.setExportDefaultPath(os.getcwd(), '')
 
 	just_width = False
 	just_height = False

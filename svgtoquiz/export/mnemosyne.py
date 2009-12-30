@@ -125,8 +125,8 @@ class MnemosyneFile(ExportFile):
 	Called just after options have been parsed, but before any other
 	work is done.
 	"""
-	cls.setExportDefaultPath(os.path.join(os.path.expanduser('~'),
-			         os.path.join('.mnemosyne', 'maps')))
+	cls.setExportDefaultPath(
+	    os.path.join(os.path.expanduser('~'), '.mnemosyne'), 'maps')
 
     init = classmethod(init)
 

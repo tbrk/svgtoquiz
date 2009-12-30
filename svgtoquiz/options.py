@@ -181,8 +181,9 @@ class Options:
 	# Relative paths (without leading dot) go into a default directory
 	# specified (later) by the chosen export module.
 	if re.match(r'^[^./]', path):
-	    self.exportpath = path
-	    self.dstpath = os.path.join('${EXPORTDEFAULT}', path)
+	    self.exportpath = os.path.join('${EXPORTDEFAULTSUB}', path)
+	    self.dstpath = os.path.join('${EXPORTDEFAULTROOT}',
+					'${EXPORTDEFAULTSUB}', path)
 	else:
 	    self.exportpath = path
 	    self.dstpath = path
@@ -282,8 +283,10 @@ class Options:
 	    self.category   = options.category.decode(self.encoding)
 
 	if options.dstpath:
+	    print "self.setDstPath(options.dstpath.decode(self.encoding))" # XXX
 	    self.setDstPath(options.dstpath.decode(self.encoding))
 	elif self.name:
+	    print "self.setDstPath(self.name)" # XXX
 	    self.setDstPath(self.name)
 
 	if options.extract_docs == None:
@@ -359,6 +362,7 @@ class Options:
 	self.name = None
 	self.debug = 0
 
+	print "self.setDstPath('maps')" # XXX
 	self.setDstPath('maps')
 	self.to_png         = True
 	self.zoom	    = 1.0
