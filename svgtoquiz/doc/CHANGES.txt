@@ -1,3 +1,10 @@
+svgtoquiz-1.6.0
+    * Prefix Mnemosyne ids with an underscore so that Mnemosyne will
+      generate unique ids properly (Thanks to Peter Bienstman).
+    * Fix a bug in Mnemosyne exports where the files would be exported to
+      ~/.mnemosyne/maps/<name>, but where the maps subdirectory would not
+      be included in image paths within the cards.
+
 svgtoquiz-1.5.0
     * Handle, in addition to path elements:
 	circle, rect, ellipse, polygon
