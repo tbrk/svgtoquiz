@@ -9,23 +9,25 @@ PYTHON=python
 
 all: develop
 
-develop!
-	@echo export PYTHONPATH=`pwd`/$(STAGINGDIR):$$PYTHONPATH > env.sh
-	@`. env.sh`
+develop: env.sh
 	mkdir -p $(STAGINGDIR)
+	PYTHONPATH=`pwd`/$(STAGINGDIR):${PYTHONPATH} \
 	$(PYTHON) setup.py develop --install-dir=$(STAGINGDIR)
 
 dist: bdist_egg sdist
 	# bdist_wininst
 
-bdist_egg!
+bdist_egg:
 	$(PYTHON) setup.py bdist_egg
 
-sdist!
+sdist:
 	$(PYTHON) setup.py sdist
 
-bdist_wininst!
+bdist_wininst:
 	$(PYTHON) setup.py bdist_wininst
+
+env.sh:
+	echo PYTHONPATH=`pwd`/$(STAGINGDIR):${PYTHONPATH} > env.sh
 
 tags:
 	(cd svgtoquiz; exctags *.py)
@@ -40,4 +42,6 @@ clobber: clean
 	-@rm svgtoquiz/tags
 	-@rm -r develop dist
 	-@rm env.sh
+
+.PHONY: develop bdist_egg sdist bdist_wininst
 
