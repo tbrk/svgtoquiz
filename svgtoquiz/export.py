@@ -84,7 +84,7 @@ class ExportFile:
 	Return an id that is unique for the object.
 	"""
 	self.nextid += 1
-	return str(self.nextid)
+	return ("_%d" % self.nextid)
 
     def warning(cls, msg):
 	"""
