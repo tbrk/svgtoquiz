@@ -23,7 +23,14 @@ import svgmanip
 # for the gui csv editor
 from Tkinter import *
 import tkMessageBox
-from PIL import Image, ImageTk
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    print >> sys.stdout, ("error: The Python Imaging Library (PIL)"
+	+ "with Tk support, which is\n"
+	+ "required by svgtoquiz, is either not installed"
+	+ " or not configured properly.")
+    sys.exit(1)
 
 IGNORE = '_ignore_' # must match decl in svgtoquiz.py
 
