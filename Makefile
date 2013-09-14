@@ -14,8 +14,7 @@ develop: env.sh
 	PYTHONPATH=`pwd`/$(STAGINGDIR):${PYTHONPATH} \
 	$(PYTHON) setup.py develop --install-dir=$(STAGINGDIR)
 
-dist: bdist_egg sdist
-	# bdist_wininst
+dist: bdist_egg sdist bdist_wininst
 
 bdist_egg:
 	$(PYTHON) setup.py bdist_egg
