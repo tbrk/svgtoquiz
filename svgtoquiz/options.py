@@ -72,7 +72,7 @@ class Options:
     parser.add_option('-d', '--dst-path', dest='dstpath', metavar='<path>',
 		      help='specify a location to put the results.')
     parser.add_option('-x', '--export', dest='export', metavar='<filetype>',
-		      default='mnemosyne',
+		      default='mnemosyne2',
 		      help='specify the format of the results.')
     parser.add_option('-n', '--name', dest='name', metavar='<string>',
 		      help='use a different name')
