@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id$
-#
-# Copyright (c) 2008 Timothy Bourke. All rights reserved.
+# Copyright (c) 2013 Timothy Bourke. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or 
 # modify it under the terms of the "BSD License" which is 
@@ -14,5 +12,5 @@
 # License for more details.
 #
 
-__version__='1.6.0'
+__version__='2.0.0'
 

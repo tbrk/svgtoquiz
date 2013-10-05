@@ -7,7 +7,7 @@ ez_setup.use_setuptools()
 from setuptools import setup
 
 setup(name		= 'svgtoquiz',
-      version		= '1.6.1',
+      version		= '2.0.0',
       packages		= ['svgtoquiz'],
 
       # for gui:
@@ -20,11 +20,11 @@ setup(name		= 'svgtoquiz',
 
       # metadata
       author	= 'Timothy Bourke',
-      author_email = 'timbob@bigpond.com',
+      author_email = 'tim@tbrk.org',
       description  = 'Generate graphical flashcards from svg images.',
       keywords  = "svg mnemosyne maps",
       license	= 'BSD',
-      url	= 'http://www.cse.unsw.edu.au/~tbourke/software/svgtoquiz.html',
+      url	= 'http://www.tbrk.org/software/svgtoquiz.html',
 
       long_description = """\
 Work through an svg file turning every path whose id matches a given

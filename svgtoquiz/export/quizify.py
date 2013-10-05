@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id: mnemosyne.py 183 2008-11-27 10:49:09Z tbourke $
-#
-# Copyright (c) 2010 Timothy Bourke. All rights reserved.
+# Copyright (c) 2013 Timothy Bourke. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or 
 # modify it under the terms of the "BSD License" which is 
