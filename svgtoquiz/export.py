@@ -104,6 +104,10 @@ class ExportFile:
 	Expand out '${EXPORTDEFAULTROOT}' and '${EXPORTDEFAULTSUB}'
 	in options.dstpath, and ${EXPORTDEFAULTSUB} in options.exportpath.
 	"""
+
+	if root != '': root = os.path.join(root, '')   # add path separator
+	if sub != '':  sub = os.path.join(sub, '')     # add path separator
+
 	options.dstpath = options.dstpath.replace('${EXPORTDEFAULTROOT}', root)
 	options.dstpath = options.dstpath.replace('${EXPORTDEFAULTSUB}', sub)
 

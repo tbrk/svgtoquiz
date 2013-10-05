@@ -181,9 +181,8 @@ class Options:
 	# Relative paths (without leading dot) go into a default directory
 	# specified (later) by the chosen export module.
 	if re.match(r'^[^./]', path):
-	    self.exportpath = os.path.join('${EXPORTDEFAULTSUB}', path)
-	    self.dstpath = os.path.join('${EXPORTDEFAULTROOT}',
-					'${EXPORTDEFAULTSUB}', path)
+	    self.exportpath = '${EXPORTDEFAULTSUB}' + path
+	    self.dstpath = '${EXPORTDEFAULTROOT}' + '${EXPORTDEFAULTSUB}' + path
 	else:
 	    self.exportpath = path
 	    self.dstpath = path

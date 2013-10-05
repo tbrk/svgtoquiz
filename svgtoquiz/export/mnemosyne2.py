@@ -13,9 +13,13 @@
 #
 
 import xml.dom.minidom, os, os.path, codecs
+import datetime
 from svgtoquiz import register_export_class, ExportFile, options
 from sets import Set
 import random
+import getpass
+from zipfile import ZipFile
+import cStringIO
 
 default_card_atts = {
     'card_t'  : '4',
@@ -50,6 +54,12 @@ def rand_uuid():
         uuid += chars[int(rand() * 62.0 - 1)]
     return uuid
 
+def wd(writer, data):
+    data = data.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    writer.write(data)
+
+xml.dom.minidom._write_data = wd
+
 class MnemosyneFile2(ExportFile):
     """
     Export plugin for Mnemosyne 2.x.
@@ -68,7 +78,7 @@ class MnemosyneFile2(ExportFile):
         """
         Initialize an export file with a category name.
         """
-        ExportFile.__init__(self, category, filepath + '.xml')
+        ExportFile.__init__(self, category, 'cards.xml')
 
         self.dom = xml.dom.minidom.Document()
 
@@ -188,18 +198,36 @@ class MnemosyneFile2(ExportFile):
             self.addLogItem(16, children=fact_ele, o_id=fact_id)
 
         for (card_id, card_atts) in self.cards:
-            self.addLogItem(16, attributes=card_atts, o_id=card_id)
+            self.addLogItem(6, attributes=card_atts, o_id=card_id)
 
         xfp = codecs.open(self.filepath, 'wb', 'UTF-8')
-        self.dom.writexml(xfp, encoding='UTF-8')
+        self.dom.writexml(xfp, encoding='UTF-8', addindent='  ', newl='\n')
         xfp.close()
+
+        # Write the metadata skeleton
+        md = codecs.open('METADATA', 'wb', 'UTF-8')
+        md.write('tags: %s\n' % self.category)
+        md.write('author_email: \n')
+        md.write('notes: \n')
+        md.write('author_name: %s\n' % getpass.getuser())
+        md.write('card_set_name: %s\n' % self.category)
+        md.write('date: %s\n' % datetime.date.today().isoformat())
+        md.write('revision: 1\n')
+
+        # Create a zip file
+        czip_name = '%s.cards' % self.category.replace(' ', '_').lower()
+        with ZipFile(czip_name, 'w') as czip:
+            czip.write('cards.xml')
+            czip.write('METADATA')
+            for img in self.images:
+                czip.write(img)
 
     def init(cls, args = []):
         """
         Called just after options have been parsed, but before any other
         work is done.
         """
-        cls.setExportDefaultPath(os.getcwd(), 'cards')
+        cls.setExportDefaultPath(os.getcwd(), '')
 
     init = classmethod(init)
 
