@@ -1,0 +1,4 @@
+include *.py
+recursive-include svgtoquiz/examples *.csv *.svg *.txt *.xql *.py
+recursive-include svgtoquiz/export *.py
+recursive-include svgtoquiz/doc *.txt

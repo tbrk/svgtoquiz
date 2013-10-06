@@ -6,25 +6,36 @@ import ez_setup
 ez_setup.use_setuptools()
 from setuptools import setup
 
-setup(name		= 'svgtoquiz',
-      version		= '2.0.1',
-      packages		= ['svgtoquiz'],
+setup(name              = 'svgtoquiz',
+      version           = '2.0.1',
+      packages          = ['svgtoquiz'],
 
       # for gui:
       extras_require = { 'gui' : ['Tkinter>=2.5', 'PIL>=1.1.6'] },
 
+      package_data = {
+          'svgtoquiz' : [
+                'export/*.py',
+                'doc/*.txt',
+                'examples/*.csv',
+                'examples/*.svg',
+                'examples/*.txt',
+                'examples/*.xql',
+                'examples/*.py',
+              ]
+          },
       include_package_data = True,
       entry_points = {
-	    'console_scripts'	      : [ 'svgtoquiz = svgtoquiz:main' ],
-	    'setuptools.installation' : [ 'svgtoquiz = svgtoquiz:main' ]},
+            'console_scripts'         : [ 'svgtoquiz = svgtoquiz:main' ],
+            'setuptools.installation' : [ 'svgtoquiz = svgtoquiz:main' ]},
 
       # metadata
-      author	= 'Timothy Bourke',
+      author    = 'Timothy Bourke',
       author_email = 'tim@tbrk.org',
       description  = 'Generate graphical flashcards from svg images.',
       keywords  = "svg mnemosyne maps",
-      license	= 'BSD',
-      url	= 'http://www.tbrk.org/software/svgtoquiz.html',
+      license   = 'BSD',
+      url       = 'http://www.tbrk.org/software/svgtoquiz.html',
 
       long_description = """\
 Work through an svg file turning every path whose id matches a given
