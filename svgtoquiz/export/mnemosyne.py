@@ -20,7 +20,7 @@ class MnemosyneFile(ExportFile):
     """
     Export plugin for Mnemosyne.
     """
-    name = "mnemosyne"
+    name = "mnemosyne1"
 
     def makeTextNode(self, tagName, text):
 	"""

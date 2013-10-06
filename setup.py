@@ -7,7 +7,7 @@ ez_setup.use_setuptools()
 from setuptools import setup
 
 setup(name		= 'svgtoquiz',
-      version		= '2.0.0',
+      version		= '2.0.1',
       packages		= ['svgtoquiz'],
 
       # for gui:
